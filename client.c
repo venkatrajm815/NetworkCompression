@@ -11,92 +11,77 @@
 #include <time.h> 
 #include <ctype.h>
 #include <json-c/json.h>
+#define BUFFER_SIZE 2000
 
-#define BUF_SIZE 2000
-
-//Filling the payload with high entropy data
-void read_high_entropy_data(int * data, int len)
-{
-    FILE * f = fopen("/dev/urandom", "r");
+//This method is responsible for the filling with the high entropy data
+void read_high_entropy_data(int *data, int length){
+    FILE *f = fopen("/dev/urandom", "r");
     int temp;
-    if(f == NULL)
-    {
+    if(f == NULL){
         return;
     }
-    for(int i=2; i < len; i++)
-    {
+    for(int i = 2; i < length; i++){
         temp = (int) getc(f);
         data[i] = temp;
     }
 }
 
-//Filling payload with low entropy data
-void read_low_entropy_data(int * data, int len)
-{
-    for(int i=2; i < len; i++) 
-    {
+//This method is responsible for the filling with the low entropy data
+void read_low_entropy_data(int *data, int length){
+    for(int i = 2; i < length; i++) {
         data[i] = 0;
     }
 }
 
-//Set the packet id
-void set_packet_id(int * data, int index)
-{
+//This method is responsible for setting the id for the packets
+void set_packet_id(int *data, int index){
     unsigned int temp = index;
-    unsigned char lsb = (unsigned)temp & 0xff; //divide by 255
-    unsigned char msb = (unsigned)temp >> 8; // shift bit over by 8
-    data[0] = lsb; //set the first index to lower bit
-    data[1] = msb; //set the second index to upper bit
+    unsigned char lower = (unsigned)temp & 0xff;
+    unsigned char upper = (unsigned)temp >> 8; 
+    data[0] = lower; //this is to set the first index to 'lower bit'
+    data[1] = upper; //this is to set the first index to 'upper bit'
 }
 
-//Send the file via tcp
-void send_file(int sockfd)
-{ 
-	char buffer[BUF_SIZE]; //stores message to send to server                         
-	FILE *fp=fopen("myconfig.json","r"); //opens file called myconfig.json, 'r' reads the file   
-	
-    while (fgets(buffer,BUF_SIZE,fp) != NULL ) //puts the file into the buffer
-    {
-        write(sockfd,buffer,strlen(buffer)); //writes to buffer which sends to server  
-    }
-	
+//This method sends the file using sockets
+void send_file(int sockfd){ 
+    char buffer[BUFFER_SIZE];                        
+    FILE *fp=fopen("myconfig.json","r");   	
+    while (fgets(buffer,BUFFER_SIZE,fp) != NULL ){
+        write(sockfd,buffer,strlen(buffer)); 
+    }	
     fclose(fp);
-    printf("File was sent successfully.\n");
+    printf("The File was successfully sent.\n");
 }
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char * argv[]){
     int sockfd, DF, i;
-    char buffer[BUF_SIZE], compression[25];
-    FILE * fp;
+    char buffer[BUFFER_SIZE], compression[25];
+    FILE *fp;
     struct sockaddr_in server_address, client_address;
     struct json_object *parsed_json, *Server_IP_Address, *Source_Port_Number_UDP, *Destination_Port_Number_UDP,
     *Destination_Port_Number_TCP_Head, *Destination_Port_Number_TCP_Tail, *Port_Number_TCP, 
     *Size_UDP_Payload, *Inter_Measurement_Time, *Number_UDP_Packets, *TTL_UDP_Packets;
 
-    //Check for proper usage
-    if (argv[1] == NULL)
-    {
-        printf("ERROR!\nProper ussage ./'name of executable' 'my_config_file'.json\n");
+    //This checks if there is an error in executing the configuration file 
+    if (argv[1] == NULL){
+        printf("There is an error in executing the configuration file!\nThe proper usage is ./'name of executable' 'my_config_file'.json\n");
         return EXIT_FAILURE;
     }
 
 
-    //Pre-Probing Phase TCP
-
-
-    //Open config file
-    fp = fopen(argv[1],"r"); //opens the file myconfig.json
-    if(fp == NULL)
-    {
-        printf("ERROR OPENNING FILE!\n"); //catch null pointer
+    //This is the Pre-Probing Phase
+	
+    fp = fopen(argv[1],"r"); 
+    if(fp == NULL) {
+        printf("There is an error opening the file!\n"); 
         return EXIT_FAILURE;
     }
     printf("Parsing...\n");
-    fread(buffer, BUF_SIZE, 1, fp); //reads files and puts contents inside buffer
-    parsed_json = json_tokener_parse(buffer); //parse JSON file's contents and converts them into a JSON object
+    //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object	
+    fread(buffer, BUFFER_SIZE, 1, fp); 
+    parsed_json = json_tokener_parse(buffer);
 
-    //Store parsed data into variables
+    //This is where store the parsed data from the JSON file into variables
     json_object_object_get_ex(parsed_json, "Server_IP_Address", &Server_IP_Address);
     json_object_object_get_ex(parsed_json, "Source_Port_Number_UDP", &Source_Port_Number_UDP);
     json_object_object_get_ex(parsed_json, "Destination_Port_Number_UDP", &Destination_Port_Number_UDP);
@@ -107,48 +92,38 @@ int main(int argc, char * argv[])
     json_object_object_get_ex(parsed_json, "Inter_Measurement_Time", &Inter_Measurement_Time);
     json_object_object_get_ex(parsed_json, "Number_UDP_Packets", &Number_UDP_Packets);
     json_object_object_get_ex(parsed_json, "TTL_UDP_Packets", &TTL_UDP_Packets);
-    printf("Parsing Successful\n");
+    printf("The Parsing is Successful!\n");
 
-    //Create tcp connection
-    printf("Creating Socket...\n");
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    { 
-        printf("Socket Creation Failed.\n"); 
+    //This is where we begin the creation of the socket
+    printf("Socket is being created.\n");
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ 
+        printf("Socket Creation has FAILED.\n"); 
         exit(EXIT_FAILURE); 
     } 
-    else
-    {
-        printf("Socket Successfully Created.\n"); 
+    else{
+        printf("Socket Creation is SUCCESSFUL.\n"); 
     }
 
-    //Fill in IP header
-	memset(&server_address, 0, sizeof(server_address));//zeroes out the server address
-    server_address.sin_family = AF_INET; // specifies address family with IPv4 Protocol 
-    server_address.sin_addr.s_addr = inet_addr(json_object_get_string(Server_IP_Address)); //binds to IP Address
-    server_address.sin_port = htons(json_object_get_int(Port_Number_TCP)); //binds to PORT
+    //Here we will fill all the information involing the ip address, involves the binding to the ip address and binding to the port
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET; 
+    server_address.sin_addr.s_addr = inet_addr(json_object_get_string(Server_IP_Address)); 
+    server_address.sin_port = htons(json_object_get_int(Port_Number_TCP));
     
-
-	// This connects the client socket to server socket 
-    printf("Connecting...\n");
-    if (connect(sockfd, (struct sockaddr *)&server_address, sizeof(server_address)) != 0)
-    { 
-	printf("Failed to connect to server.\n"); 
+    //This is where we connect the server and client sockets together
+    printf("Connecting sockets.\n");
+    if (connect(sockfd, (struct sockaddr *)&server_address, sizeof(server_address)) != 0){ 
+	printf("Connection to the server has FAILED.\n"); 
 	exit(EXIT_FAILURE); 
     } 
-    else
-    {
-        printf("Successfully connected to the server.\n"); 
+    else{
+        printf("Connection to the server is SUCCESSFUL.\n"); 
     }
-	
-	//calling function to send file
+    //Lastly, we send and close the socket
     send_file(sockfd); 
-
-    //closes the socket after transfer
     close(sockfd); 
 
-
-
-    //PROBING PHASE//
+    //This is the Probing Phase
 
     int datagram[json_object_get_int(Size_UDP_Payload)+2];
     
