@@ -11,44 +11,51 @@
 #include <time.h> 
 #include <ctype.h>
 #include <json-c/json.h>
-#define BUFFER_SIZE 2000
 
-//This method invovles the filling of the payload with the high entropy data
-void read_high_entropy_data(int * data, int len){
-    FILE *f = fopen("/dev/urandom", "r");
+#define BUF_SIZE 2000
+
+//Filling the payload with high entropy data
+void read_high_entropy_data(int * data, int len)
+{
+    FILE * f = fopen("/dev/urandom", "r");
     int temp;
-    if(f == NULL){
+    if(f == NULL)
+    {
         return;
     }
-    for(int i=2; i < len; i++){
+    for(int i=2; i < len; i++)
+    {
         temp = (int) getc(f);
         data[i] = temp;
     }
 }
 
-//This method invovles the filling of the payload with the low entropy data
-void read_low_entropy_data(int * data, int len){
-    for(int i = 2; i < len; i++) {
+//Filling payload with low entropy data
+void read_low_entropy_data(int * data, int len)
+{
+    for(int i=2; i < len; i++) 
+    {
         data[i] = 0;
     }
 }
 
-//This methods sets the packet id
+//Set the packet id
 void set_packet_id(int * data, int index)
 {
     unsigned int temp = index;
-    unsigned char lsb = (unsigned)temp & 0xff; 
-    unsigned char msb = (unsigned)temp >> 8; 
-    data[0] = lsb; 
-    data[1] = msb; 
+    unsigned char lsb = (unsigned)temp & 0xff; //divide by 255
+    unsigned char msb = (unsigned)temp >> 8; // shift bit over by 8
+    data[0] = lsb; //set the first index to lower bit
+    data[1] = msb; //set the second index to upper bit
+}
 
 //Send the file via tcp
 void send_file(int sockfd)
 { 
-	char buffer[BUFFER_SIZE]; //stores message to send to server                         
+	char buffer[BUF_SIZE]; //stores message to send to server                         
 	FILE *fp=fopen("myconfig.json","r"); //opens file called myconfig.json, 'r' reads the file   
 	
-    while (fgets(buffer,BUFFER_SIZE,fp) != NULL ) //puts the file into the buffer
+    while (fgets(buffer,BUF_SIZE,fp) != NULL ) //puts the file into the buffer
     {
         write(sockfd,buffer,strlen(buffer)); //writes to buffer which sends to server  
     }
@@ -60,7 +67,7 @@ void send_file(int sockfd)
 int main(int argc, char * argv[])
 {
     int sockfd, DF, i;
-    char buffer[BUFFER_SIZE], compression[25];
+    char buffer[BUF_SIZE], compression[25];
     FILE * fp;
     struct sockaddr_in server_address, client_address;
     struct json_object *parsed_json, *Server_IP_Address, *Source_Port_Number_UDP, *Destination_Port_Number_UDP,
@@ -86,7 +93,7 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
     printf("Parsing...\n");
-    fread(buffer, BUFFER_SIZE, 1, fp); //reads files and puts contents inside buffer
+    fread(buffer, BUF_SIZE, 1, fp); //reads files and puts contents inside buffer
     parsed_json = json_tokener_parse(buffer); //parse JSON file's contents and converts them into a JSON object
 
     //Store parsed data into variables
@@ -114,11 +121,11 @@ int main(int argc, char * argv[])
         printf("Socket Successfully Created.\n"); 
     }
 
-    //Filling in of server information
-	memset(&server_address, 0, sizeof(server_address));/
-    server_address.sin_family = AF_INET; 
-    server_address.sin_addr.s_addr = inet_addr(json_object_get_string(Server_IP_Address)); 
-    server_address.sin_port = htons(json_object_get_int(Port_Number_TCP)); 
+    //Fill in IP header
+	memset(&server_address, 0, sizeof(server_address));//zeroes out the server address
+    server_address.sin_family = AF_INET; // specifies address family with IPv4 Protocol 
+    server_address.sin_addr.s_addr = inet_addr(json_object_get_string(Server_IP_Address)); //binds to IP Address
+    server_address.sin_port = htons(json_object_get_int(Port_Number_TCP)); //binds to PORT
     
 
 	// This connects the client socket to server socket 
@@ -188,14 +195,14 @@ int main(int argc, char * argv[])
     //Low entropy
     read_low_entropy_data(datagram, json_object_get_int(Size_UDP_Payload)+2);
     printf("Sending Low Entropy Data...\n");
-    for(i = 1; i < json_object_get_int(Number_UDP_Packets)+1; i++)
+    for(i = 1; i < json_object_get_int(Number_UDP_Packets)+1; i++)//chagne to payload size
     {
         set_packet_id(datagram, i);
         sendto(sockfd, datagram, json_object_get_int(Size_UDP_Payload)+2, MSG_CONFIRM, (const struct sockaddr *) &server_address, sizeof(server_address));
     }
     printf("Low Entropy Sent!\n");
 
-    
+    //Sleeping inter measurement time
     printf("Sleeping...\n");
     sleep(json_object_get_int(Inter_Measurement_Time));
 
