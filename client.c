@@ -104,7 +104,7 @@ int main(int argc, char * argv[]){
         printf("Socket Creation is SUCCESSFUL.\n"); 
     }
 
-    //Here we will fill all the information involing the ip address, involves the binding to the ip address and binding to the port
+    //Here we fill all the information involving the ip address: involves the binding to the ip address and binding to the port
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET; 
     server_address.sin_addr.s_addr = inet_addr(json_object_get_string(Server_IP_Address)); 
