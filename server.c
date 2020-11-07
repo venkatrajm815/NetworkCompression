@@ -53,8 +53,8 @@ int main(int argc, char * argv[]){
 
     //Creating socket
     printf("Creating Socket...\n");
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if(fd < 0){
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sockfd < 0){
         perror("The TCP Socket Creation has Failed\n");
         exit(EXIT_FAILURE);
     }
