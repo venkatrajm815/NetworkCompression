@@ -128,7 +128,7 @@ int main(int argc, char * argv[]){
     int datagram[json_object_get_int(Size_UDP_Payload) + 2];
     //This puts a zero for everything in the client address	
     memset(&client_address, 0, sizeof(client_address));
-    client_address.sin_family = AF_INET; /
+    client_address.sin_family = AF_INET; 
     client_address.sin_addr.s_addr = htonl(INADDR_ANY);
     client_address.sin_port = htons(json_object_get_int(Source_Port_Number_UDP));
     server_address.sin_port = htons(json_object_get_int(Destination_Port_Number_UDP));
