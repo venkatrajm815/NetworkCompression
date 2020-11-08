@@ -1,21 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>          
-#include <string.h>           
-#include <netdb.h>           
-#include <sys/types.h>        
-#include <sys/socket.h>       
-#include <netinet/in.h>       
-#include <arpa/inet.h>
+#include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>      
 #include <errno.h>
-#include <time.h>
+#include <time.h> 
 #include <ctype.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <json-c/json.h>
 
 #define BUFFER_SIZE 2000
 #define THRESHOLD 100
 
-void receive_file(int sockfd){
+void receiveFile(int sockfd){
     char buffer[BUFFER_SIZE];
     FILE *fp = fopen("myconfig.json","w");
     if(fp == NULL){
@@ -34,7 +34,6 @@ int main(int argc, char * argv[]){
     FILE * fp;
     int sockfd;
     int connfd; 
-    int i;
     int packet_id;
     unsigned int len;
     char buffer[BUFFER_SIZE], message[25];
@@ -63,10 +62,16 @@ int main(int argc, char * argv[]){
         return EXIT_FAILURE;
     }
     
-    //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object
-    fp = fopen(argv[1],"r"); 
+    //Opening of the JSON file
+    fp = fopen(argv[1],"r");
+    if(fp == NULL) {
+        printf("There is an error opening the file!\n"); 
+        return EXIT_FAILURE;
+    }
+    printf("Parsing through file.\n");
+    //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object   
     fread(buffer, BUFFER_SIZE, 1, fp); 
-    jsonParsed = json_tokener_parse(buffer); 
+    jsonParsed = json_tokener_parse(buffer);
 
     //This is where store the parsed data from the JSON file into variables
     json_object_object_get_ex(jsonParsed, "serverIPAddr", &serverIPAddr);
@@ -79,6 +84,7 @@ int main(int argc, char * argv[]){
     json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
     json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
     json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
+    printf("The Parsing is Successful!\n");
     
     //This is the Pre-Probing Phase
 
@@ -99,7 +105,7 @@ int main(int argc, char * argv[]){
     addrServer.sin_port = htons(json_object_get_int(portNumTCP));
 
     //This is where we bind the socket with the server address
-    printf("Binding...\n");
+    printf("Binding sockets.\n");
     if ((bind(sockfd, (struct sockaddr *) &addrServer, sizeof(addrServer))) != 0){ 
         printf("Socket Binding has FAILED\n"); 
         exit(EXIT_FAILURE); 
@@ -108,7 +114,7 @@ int main(int argc, char * argv[]){
         printf("Socket Bind is SUCCESSFULL\n"); 
     }
 
-    //Here, we listen to see there are any connections to be received at the port
+    //Here, we listen to see if there are any connections to be received at the port
     printf("Listening.\n");
     if ((listen(sockfd, 5)) != 0){ 
         printf("Listening Has FAILED.\n"); 
@@ -125,7 +131,7 @@ int main(int argc, char * argv[]){
     }
 
     //We call receiveFile to receive the connection
-    receive_file(connfd);
+    receiveFile(connfd);
 
      
     
@@ -163,12 +169,12 @@ int main(int argc, char * argv[]){
     }
 
     //Receive low entropy data
-    printf("Receiving low entropy..\n");
+    printf("Receiving Low Entropy Data.\n");
     start = clock();
-    for(i = 0; i < json_object_get_int(udpPackets); i++) {
-        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload)+2, 0, ( struct sockaddr *) &addrClient, &len); //receive packets into buffer
-        packet_id = (int)(((unsigned)UDPbuffer[1] << 8) | UDPbuffer[0]); //reconstruct the packet id
-        printf("Retrieved Low Entropy Packet Number: %d\n", packet_id);
+    for(int i = 0; i < json_object_get_int(udpPackets); i++) {
+        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload)+2, 0, ( struct sockaddr *) &addrClient, &len); 
+        packet_id = (int)(((unsigned)UDPbuffer[1] << 8) | UDPbuffer[0]); 
+        printf("Received Low Entropy Packet Number: %d\n", packet_id);
     }
     end = clock();
     timeTotal  = (((double)end) - ((double)start)) / ((double)CLOCKS_PER_SEC);
@@ -180,11 +186,11 @@ int main(int argc, char * argv[]){
     sleep(json_object_get_int(measurementTime));
 
     //Receive high entropy data
-    printf("Receiving high entropy..\n");
+    printf("Receiving High Entropy Data.\n");
     memset(&UDPbuffer, 0, json_object_get_int(udppayload)+2);
     start = clock();
     for(i = 0; i < json_object_get_int(udpPackets); i++) {
-        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload)+2, 0, ( struct sockaddr *) &addrClient, &len); //store packets into buffer
+        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload)+2, 0, ( struct sockaddr *) &addrClient, &len); 
         packet_id = (((unsigned)UDPbuffer[1] << 8) | UDPbuffer[0]);
         printf("Retrieved High Entropy Packet Number: %d\n", packet_id);
     }
