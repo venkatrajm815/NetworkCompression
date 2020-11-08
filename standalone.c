@@ -245,45 +245,53 @@ int main(int argc, char **argv)
 {
     FILE * fp;
     char buffer[BUF_SIZE];
-    struct sockaddr_in server_address, client_address;
-    struct json_object *parsed_json, *Server_IP_Address, *Source_Port_Number_UDP, *Destination_Port_Number_UDP,
-    *Destination_Port_Number_TCP_Head, *Destination_Port_Number_TCP_Tail, *Port_Number_TCP, 
-    *Size_UDP_Payload, *Inter_Measurement_Time, *Number_UDP_Packets, *TTL_UDP_Packets;
+    struct sockaddr_in addrServer;
+    struct sockaddr_in addClient;
+    struct json_object *jsonParsed;
+    struct json_object *serverIPAddr;
+    struct json_object *srcPortNumUDP;
+    struct json_object *destPortNumUDP;
+    struct json_object *destPortNumTCPHead;
+    struct json_object *destPortNumTCPTail; 
+    struct json_object *portNumTCP;
+    struct json_object *udppayload;
+    struct json_object *measurementTime;
+    struct json_object *udpPackets;
+    struct json_object *ttlPackets;
     enum{UDP_HDRLEN=8, ICMP_HDRLEN=8, TCP_HDRLEN=20, IP4_HDRLEN=20};
 
-    //Check for proper usage
-    if (argv[1] == NULL)
-    {
-        printf("ERROR!\nProper ussage ./'name of executable' 'my_config_file'.json\n");
+   //This checks if there is an error in executing the configuration file 
+    if (argv[1] == NULL){
+        printf("ERROR!\nnEnter ./'application name' myconfig.json\n");
         return EXIT_FAILURE;
     }
-
-    //Open config file
-    fp = fopen(argv[1],"r"); //opens the file myconfig.json
-    if(fp == NULL)
-    {
-        printf("ERROR OPENNING FILE!\n"); //catch null pointer
+    
+     //Opening of the JSON file
+    fp = fopen(argv[1], "r"); 
+    if(fp == NULL) {
+        printf("There is an error opening the file!\n"); 
         return EXIT_FAILURE;
     }
-    printf("Parsing...\n");
-    fread(buffer, BUF_SIZE, 1, fp); //reads files and puts contents inside buffer
-    parsed_json = json_tokener_parse(buffer); //parse JSON file's contents and converts them into a JSON object
+    printf("Parsing through file.\n");
+    //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object   
+    fread(buffer, BUFFER_SIZE, 1, fp); 
+    jsonParsed = json_tokener_parse(buffer);
 
-    //Store parsed data into variables
-    json_object_object_get_ex(parsed_json, "Server_IP_Address", &Server_IP_Address);
-    json_object_object_get_ex(parsed_json, "Source_Port_Number_UDP", &Source_Port_Number_UDP);
-    json_object_object_get_ex(parsed_json, "Destination_Port_Number_UDP", &Destination_Port_Number_UDP);
-    json_object_object_get_ex(parsed_json, "Destination_Port_Number_TCP_Head", &Destination_Port_Number_TCP_Head);
-    json_object_object_get_ex(parsed_json, "Destination_Port_Number_TCP_Tail", &Destination_Port_Number_TCP_Tail);
-    json_object_object_get_ex(parsed_json, "Port_Number_TCP", &Port_Number_TCP);
-    json_object_object_get_ex(parsed_json, "Size_UDP_Payload", &Size_UDP_Payload);
-    json_object_object_get_ex(parsed_json, "Inter_Measurement_Time", &Inter_Measurement_Time);
-    json_object_object_get_ex(parsed_json, "Number_UDP_Packets", &Number_UDP_Packets);
-    json_object_object_get_ex(parsed_json, "TTL_UDP_Packets", &TTL_UDP_Packets);
-    printf("Parsing Successful\n");
+    //This is where store the parsed data from the JSON file into variables
+    json_object_object_get_ex(jsonParsed, "serverIPAddr", &serverIPAddr);
+    json_object_object_get_ex(jsonParsed, "srcPortNumUDP", &srcPortNumUDP);
+    json_object_object_get_ex(jsonParsed, "destPortNumUDP", &destPortNumUDP);
+    json_object_object_get_ex(jsonParsed, "destPortNumTCPHead", &destPortNumTCPHead);
+    json_object_object_get_ex(jsonParsed, "destPortNumTCPTail", &destPortNumTCPTail);
+    json_object_object_get_ex(jsonParsed, "portNumTCP", &portNumTCP);
+    json_object_object_get_ex(jsonParsed, "udppayload", &udppayload);
+    json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
+    json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
+    json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
+    printf("The Parsing is SUCCESSFUL.");
 
     printf("(Testing) Preparing to send packets!\n");
-    printf("Sending...\n");
+    printf("Sending.\n");
     
     int i, status, sd, *ip_flags, *tcp_flags;
     const int on = 1;
