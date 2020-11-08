@@ -42,7 +42,7 @@ int main(int argc, char * argv[]){
     struct sockaddr_in server_address, client_address;
     struct json_object *parsed_json, *Server_IP_Address, *Source_Port_Number_UDP, *Destination_Port_Number_UDP,
     *Destination_Port_Number_TCP_Head, *Destination_Port_Number_TCP_Tail, *Port_Number_TCP, 
-    *Size_UDP_Payload, *Inter_Measurement_Time, *Number_UDP_Packets, *TTL_UDP_Packets;
+    *Size_UDP_Payload, *Inter_Measurement_Time, *Number_UDP_Packets, *TTL_UDP_Packets;nEnter ./'application name' myconfig.json
 
     if(argv[1] == NULL){
         printf("ERROR!\nUsage is ./'name of executable' 'my_config_file'\n");
