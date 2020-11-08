@@ -172,7 +172,7 @@ int main(int argc, char * argv[]){
     printf("Receiving Low Entropy Data.\n");
     start = clock();
     for(int i = 0; i < json_object_get_int(udpPackets); i++) {
-        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload)+2, 0, ( struct sockaddr *) &addrClient, &len); 
+        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload) + 2, 0, ( struct sockaddr *) &addrClient, &len); 
         packet_id = (int)(((unsigned)UDPbuffer[1] << 8) | UDPbuffer[0]); 
         printf("Received Low Entropy Packet Number: %d\n", packet_id);
     }
@@ -181,16 +181,16 @@ int main(int argc, char * argv[]){
     timeLE = timeTotal * 1000;
     printf("Low Entropy Time: %f\n", timeLE);
 
-    //Sleeping inter measurement time
-    printf("Sleeping...\n"); 
+    //Sleeping using the inter measurement time
+    printf("Sleeping.\n"); 
     sleep(json_object_get_int(measurementTime));
 
     //Receive high entropy data
     printf("Receiving High Entropy Data.\n");
     memset(&UDPbuffer, 0, json_object_get_int(udppayload)+2);
     start = clock();
-    for(i = 0; i < json_object_get_int(udpPackets); i++) {
-        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload)+2, 0, ( struct sockaddr *) &addrClient, &len); 
+    for(int i = 0; i < json_object_get_int(udpPackets); i++) {
+        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload) + 2, 0, ( struct sockaddr *) &addrClient, &len); 
         packet_id = (((unsigned)UDPbuffer[1] << 8) | UDPbuffer[0]);
         printf("Retrieved High Entropy Packet Number: %d\n", packet_id);
     }
@@ -206,51 +206,54 @@ int main(int argc, char * argv[]){
         strcpy(message, "NO COMPRESSION DETECTED\0");
     }
     
-    //Post-Probing-TCP//
-    printf("Creating Socket...\n");
-    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("TCP Socket Creation Failed\n");
-        exit(EXIT_FAILURE);
-    }
-    else {
-        printf("TCP Socket Creation Successful\n");
+     //This is Post-Probing Phase
+    
+    //This is the creating of the TCP socket
+    printf("Socket is being created.\n");
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ 
+        printf("Socket Creation has FAILED.\n"); 
+        exit(EXIT_FAILURE); 
+    } 
+    else{
+        printf("Socket Creation is SUCCESSFUL.\n"); 
     }
 
-    //Fill in IP header
+    //Here we fill all the information involving the ip address: involves the binding to the ip address and binding to the port
     memset(&addrServer, 0 , sizeof(addrServer));
     memset(&addrClient, 0, sizeof(addrClient));
-    addrServer.sin_family = AF_INET; // IPv4
+    addrServer.sin_family = AF_INET; 
     addrServer.sin_addr.s_addr = inet_addr(json_object_get_string(serverIPAddr));
     addrServer.sin_port = htons(json_object_get_int(portNumTCP));
 
     //Bind TCP socket to port
-    printf("Binding...\n");
+    printf("Binding socket.\n");
     if ((bind(sockfd, (struct sockaddr *) &addrServer, sizeof(addrServer))) != 0) { 
-        printf("TCP Socket Bind Failed\n"); 
+        printf("TCP Socket Binding has FAILED.\n"); 
         exit(EXIT_FAILURE); 
     } else {
-        printf("TCP Socket Bind Successful\n"); 
+        printf("TCP Socket Binding is SUCCESSFUL.\n"); 
     }
 
     //Listen to receive connections at port
-    printf("Listening...\n");
+    printf("Listening.\n");
     if ((listen(sockfd, 5)) != 0) { 
-        printf("Listening Failed\n"); 
+        printf("Listening Failed.\n"); 
         exit(EXIT_FAILURE); 
     } 
     
-    //Accept the connection
+    //Accepting of the connection, print message based on if connection failed or was established
     len = sizeof(addrClient);
     if ((connfd = accept(sockfd, (struct sockaddr *) &addrClient, &len)) < 0) { 
-        printf("TCP Connection Failed\n"); 
+        printf("TCP Connection has FAILED.\n"); 
         exit(0); 
     } else {
-        printf("TCP Connection Established\n"); 
+        printf("TCP Connection is SUCCESSFUL.\n"); 
     }
 
-    //Send the TCP message
+    //This sends the TCP message
     send(connfd, message, strlen(message), 0);
     
+    //Lastly, closes the socket
     close(sockfd);
     return 0;
 }
