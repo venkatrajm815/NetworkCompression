@@ -2,19 +2,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>      
 #include <errno.h>
 #include <time.h> 
 #include <ctype.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <json-c/json.h>
+
 #define BUFFER_SIZE 2000
 
 //This method is responsible for the filling with the high entropy data
-void highentropy(int *data, int length){
+void highEntropy(int *data, int length){
     FILE *f = fopen("/dev/urandom", "r");
     int temp;
     if(f == NULL){
@@ -76,16 +77,14 @@ int main(int argc, char * argv[]){
         printf("ERROR!\nnEnter ./'application name' myconfig.json\n");
         return EXIT_FAILURE;
     }
-
-
-    //This is the Pre-Probing Phase
     
+     //Opening of the JSON file
     fp = fopen(argv[1], "r"); 
     if(fp == NULL) {
         printf("There is an error opening the file!\n"); 
         return EXIT_FAILURE;
     }
-    printf("Parsing...\n");
+    printf("Parsing through file.\n");
     //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object   
     fread(buffer, BUFFER_SIZE, 1, fp); 
     jsonParsed = json_tokener_parse(buffer);
@@ -102,7 +101,9 @@ int main(int argc, char * argv[]){
     json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
     json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
     printf("The Parsing is Successful!\n");
-
+    
+    //This is the Pre-Probing Phase
+    
     //This is where we begin the creation of the socket
     printf("Socket is being created.\n");
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ 
@@ -123,17 +124,16 @@ int main(int argc, char * argv[]){
     if (connect(sockfd, (struct sockaddr *)&addrServer, sizeof(addrServer)) != 0){ 
     printf("Connection to the server has FAILED.\n"); 
     exit(EXIT_FAILURE); 
-    } 
-    else{
+    }else{
         printf("Connection to the server is SUCCESSFUL.\n"); 
     }
-    //Lastly, we send and close the socket
+    //Lastly, we send file and close the socket
     sendfile(sockfd); 
     close(sockfd); 
 
     //This is the Probing Phase
 
-    int datagram[json_object_get_int(udppayload) + 2];
+    int udp[json_object_get_int(udppayload) + 2];
     //This puts a zero for everything in the client address 
     memset(&addClient, 0, sizeof(addClient));
     addClient.sin_family = AF_INET; 
@@ -147,34 +147,32 @@ int main(int argc, char * argv[]){
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){ 
         perror("UDP Socket Creation has FAILED\n"); 
         exit(EXIT_FAILURE); 
-    }
-    else{
+    }else{
         printf("UDP Socket Creation is SUCCESSFUL\n");
     }
     
-    //This is the setting of the DON'T fragment
-    DF = IP_PMTUDISC_DO; 
-    printf("Setting DON'T FRAGMENT bit...\n");
+    //This is the setting of the DON'T fragment 
+    printf("Setting the DON'T fragment bit.\n");
+    DF = IP_PMTUDISC_DO;
     if(setsockopt(sockfd, IPPROTO_IP, IP_MTU_DISCOVER, &DF, sizeof(DF)) < 0){
-        printf("Unable to set DON'T FRAGMENT bit\n");
-    }
-    else{
-        printf("DON'T FRAGMENT bit set correctly!\n");
+        printf("ERROR while setting DON'T fragment bit.\n");
+    }else{
+        printf("DON'T fragment bit set SUCCESSFULLY.\n");
     }
     
     //A check to see if the socket bind passed, prints error message if failed  
     if(bind(sockfd, (struct sockaddr *)&addClient, sizeof(addClient)) < 0){
-        printf("UDP Socket Bind Failed\n");
+        printf("UDP Socket Bind has FAILED.\n");
         exit(EXIT_FAILURE);
     }
     sleep(5);
 
     //This is the sending of the LOW entropy data
-    lowentropy(datagram, json_object_get_int(udppayload)+2);
+    lowentropy(udp, json_object_get_int(udppayload)+2);
     printf("Sending Low Entropy Data.\n");
     for(int i = 1; i < json_object_get_int(udpPackets) + 1; i++){
-        setpacketid(datagram, i);
-        sendto(sockfd, datagram, json_object_get_int(udppayload) + 2, MSG_CONFIRM, (const struct sockaddr *) &addrServer, sizeof(addrServer));
+        setpacketid(udp, i);
+        sendto(sockfd, udp, json_object_get_int(udppayload) + 2, MSG_CONFIRM, (const struct sockaddr *) &addrServer, sizeof(addrServer));
     }
     printf("Low Entropy data has been sent.\n");
 
@@ -183,11 +181,11 @@ int main(int argc, char * argv[]){
     sleep(json_object_get_int(measurementTime));
 
     //This is the sending of the HIGH entropy data
-    highentropy(datagram, json_object_get_int(udppayload)+2);
+    highEntropy(udp, json_object_get_int(udppayload)+2);
     printf("Sending High Entropy Data.\n");
     for(int i = 1; i < json_object_get_int(udpPackets) + 1; i++){
-        setpacketid(datagram, i);
-        sendto(sockfd, datagram, json_object_get_int(udppayload)+2, MSG_CONFIRM, (const struct sockaddr *) &addrServer, sizeof(addrServer));
+        setpacketid(udp, i);
+        sendto(sockfd, udp, json_object_get_int(udppayload)+2, MSG_CONFIRM, (const struct sockaddr *) &addrServer, sizeof(addrServer));
     }
     printf("High entropy data has been sent.\n");
     sleep(5);
