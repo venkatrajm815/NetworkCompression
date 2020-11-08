@@ -56,70 +56,66 @@ int main(int argc, char * argv[]){
     struct json_object *measurementTime;
     struct json_object *udpPackets;
     struct json_object *ttlPackets;
-
+    
+    //This checks if there is an error in executing the configuration file 
     if(argv[1] == NULL){
         printf("ERROR!\nEnter ./'application name' myconfig.json\n");
         return EXIT_FAILURE;
     }
     
-    //THIS IS THE Pre-Probing Phase
+    //This is the Pre-Probing Phase
 
-    //Creating socket
-    printf("Creating Socket...\n");
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd < 0) {
-        perror("The TCP Socket Creation has Failed\n");
-        exit(EXIT_FAILURE);
+    //This is where we begin the creation of the socket
+    printf("Socket is being created.\n");
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ 
+        printf("Socket Creation has FAILED.\n"); 
+        exit(EXIT_FAILURE); 
     } else {
-        printf("The TCP Socket Creation is Successful\n");
+        printf("Socket Creation is SUCCESSFUL.\n"); 
     }
-
-    //Fills in server information
-    memset(&addrServer, 0 , sizeof(addrServer));
+   
+    //Here we fill all the information involving the ip address: involves the binding to the ip address and binding to the port
+    memset(&addrServer, 0, sizeof(addrServer));
     memset(&addrClient, 0, sizeof(addrClient));
     addrServer.sin_family = AF_INET; 
-    addrServer.sin_addr.s_addr = inet_addr("192.168.1.30"); 
-    addrServer.sin_port = htons(9999);
+    addrServer.sin_addr.s_addr = inet_addr(json_object_get_string(serverIPAddr)); 
+    addrServer.sin_port = htons(json_object_get_int(portNumTCP));
 
-    //This binds the socket with the server address
+    //This is where we bind the socket with the server address
     printf("Binding...\n");
     if ((bind(sockfd, (struct sockaddr *) &addrServer, sizeof(addrServer))) != 0){ 
-        printf("TCP Socket Bind Has Failed\n"); 
+        printf("Socket Binding has FAILED\n"); 
         exit(EXIT_FAILURE); 
     } 
     else{
-        printf("TCP Socket Bind Has Succeeded\n"); 
+        printf("Socket Bind is SUCCESSFULL\n"); 
     }
 
-    //Listen to receive connections at port
-    printf("Listening...\n");
-    if ((listen(sockfd, 5)) != 0)
-    { 
-        printf("Listening Has Failed\n"); 
+    //Here, we listen to see there are any connections to be received at the port
+    printf("Listening.\n");
+    if ((listen(sockfd, 5)) != 0){ 
+        printf("Listening Has FAILED.\n"); 
         exit(EXIT_FAILURE); 
     } 
     
-    //Accept the connection
+    //This is where we accept the TCP connection and connect the client and server together 
     len = sizeof(addrClient); 
-    if ((connfd = accept(sockfd, (struct sockaddr *) &addrClient, &len)) < 0)
-    { 
-        printf("TCP Connection Has Failed\n"); 
+    if ((connfd = accept(sockfd, (struct sockaddr *) &addrClient, &len)) < 0){ 
+        printf("Connection to the client has FAILED.\n"); 
         exit(0); 
-    } 
-    else
-    {
-        printf("TCP Connection Has Established\n"); 
+    } else{
+        printf("Connection to the client is SUCCESSFUL.\n"); 
     }
 
-    //Calling function to receive file from connection
+    //We call receiveFile to receive the connection
     receive_file(connfd);
 
-    //File parsing happens here
-    fp = fopen(argv[1],"r"); //opens the file myconfig.json
-    fread(buffer, BUFFER_SIZE, 1, fp); //reads files and puts contents inside buffer
-    jsonParsed = json_tokener_parse(buffer); //call the json tokenizer
+     //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object
+    fp = fopen(argv[1],"r"); 
+    fread(buffer, BUFFER_SIZE, 1, fp); 
+    jsonParsed = json_tokener_parse(buffer); 
 
-    //Storing the data into the correct variables
+    //This is where store the parsed data from the JSON file into variables
     json_object_object_get_ex(jsonParsed, "serverIPAddr", &serverIPAddr);
     json_object_object_get_ex(jsonParsed, "srcPortNumUDP", &srcPortNumUDP);
     json_object_object_get_ex(jsonParsed, "destPortNumUDP", &destPortNumUDP);
@@ -130,13 +126,12 @@ int main(int argc, char * argv[]){
     json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
     json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
     json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
-
+    
+    //Lastly, we close the sockets
     close(sockfd);
     close(connfd);
-
-
-    //PROBING PHASE//
-
+    
+    //This is the Probing Phase
 
     //Set up the server address for the udp header
     int UDPbuffer[json_object_get_int(udppayload)+2];
@@ -144,22 +139,25 @@ int main(int argc, char * argv[]){
     addrServer.sin_addr.s_addr = inet_addr(json_object_get_string(serverIPAddr));
     addrServer.sin_port = htons(json_object_get_int(destPortNumUDP));
 
-    //Creation of UDP socket
-    printf("Creating Socket...\n");
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
-        perror("UDP Socket Creation Failed"); 
+    //We begin creating the UDP socket
+    //Print message based on if it was succesful or not 
+    printf("Creating Socket.\n");
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){ 
+        perror("UDP Socket Creation has FAILED\n"); 
         exit(EXIT_FAILURE); 
-    } else {
-        printf("UDP Socket Creation Successful\n");
+    }
+    else{
+        printf("UDP Socket Creation is SUCCESSFUL\n");
     }
 
     //Bind the socket to the udp port
-    printf("Binding...\n");
+    //A check to see if the socket bind passed, prints error message if failed  
+    printf("Binding socket.\n");
     if (bind(sockfd, (const struct sockaddr *)&addrServer, sizeof(addrServer))<0) { 
-        perror("UDP Socket Bind Failed"); 
+        perror("UDP Socket Binding has FAILED."); 
         exit(EXIT_FAILURE); 
     } else {
-        printf("UDP Socket Bind Successful\n");
+        printf("UDP Socket Binding is SUCCESSFUL.\n");
     }
 
     //Receive low entropy data
