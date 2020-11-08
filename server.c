@@ -63,6 +63,23 @@ int main(int argc, char * argv[]){
         return EXIT_FAILURE;
     }
     
+    //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object
+    fp = fopen(argv[1],"r"); 
+    fread(buffer, BUFFER_SIZE, 1, fp); 
+    jsonParsed = json_tokener_parse(buffer); 
+
+    //This is where store the parsed data from the JSON file into variables
+    json_object_object_get_ex(jsonParsed, "serverIPAddr", &serverIPAddr);
+    json_object_object_get_ex(jsonParsed, "srcPortNumUDP", &srcPortNumUDP);
+    json_object_object_get_ex(jsonParsed, "destPortNumUDP", &destPortNumUDP);
+    json_object_object_get_ex(jsonParsed, "destPortNumTCPhead", &destPortNumTCPhead);
+    json_object_object_get_ex(jsonParsed, "destPortNumTCPtail", &destPortNumTCPtail);
+    json_object_object_get_ex(jsonParsed, "portNumTCP", &portNumTCP);
+    json_object_object_get_ex(jsonParsed, "udppayload", &udppayload);
+    json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
+    json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
+    json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
+    
     //This is the Pre-Probing Phase
 
     //This is where we begin the creation of the socket
@@ -110,22 +127,7 @@ int main(int argc, char * argv[]){
     //We call receiveFile to receive the connection
     receive_file(connfd);
 
-     //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object
-    fp = fopen(argv[1],"r"); 
-    fread(buffer, BUFFER_SIZE, 1, fp); 
-    jsonParsed = json_tokener_parse(buffer); 
-
-    //This is where store the parsed data from the JSON file into variables
-    json_object_object_get_ex(jsonParsed, "serverIPAddr", &serverIPAddr);
-    json_object_object_get_ex(jsonParsed, "srcPortNumUDP", &srcPortNumUDP);
-    json_object_object_get_ex(jsonParsed, "destPortNumUDP", &destPortNumUDP);
-    json_object_object_get_ex(jsonParsed, "destPortNumTCPhead", &destPortNumTCPhead);
-    json_object_object_get_ex(jsonParsed, "destPortNumTCPtail", &destPortNumTCPtail);
-    json_object_object_get_ex(jsonParsed, "portNumTCP", &portNumTCP);
-    json_object_object_get_ex(jsonParsed, "udppayload", &udppayload);
-    json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
-    json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
-    json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
+     
     
     //Lastly, we close the sockets
     close(sockfd);
