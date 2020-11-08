@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>     
@@ -18,7 +19,7 @@
 #include <netinet/ip.h>
 #include <net/if.h>
 
-#define BUF_SIZE 2000
+#define BUFFER_SIZE 2000
 
 //this function creates unique checksum for the IP headers
 uint16_t checksum(uint16_t *addr, int len)
@@ -244,7 +245,7 @@ int * allocate_intmem(int len)
 int main(int argc, char **argv)
 {
     FILE * fp;
-    char buffer[BUF_SIZE];
+    char buffer[BUFFER_SIZE];
     struct sockaddr_in addrServer;
     struct sockaddr_in addClient;
     struct json_object *jsonParsed;
@@ -334,10 +335,10 @@ int main(int argc, char **argv)
     close (sd);
 
     // Source IPv4 address: you need to fill this out
-    strcpy (src_ip, "10.0.0.249");
+    strcpy (src_ip, "192.168.1.28");
 
     // Destination URL or IPv4 address: you need to fill this out
-    strcpy (target, json_object_get_string(Server_IP_Address));
+    strcpy (target, json_object_get_string(serverIPAddr));
 
     // Fill out hints for getaddrinfo().
     memset (&hints, 0, sizeof (struct addrinfo));
@@ -422,7 +423,7 @@ int main(int argc, char **argv)
     tcphdr.th_sport = htons (8080);
 
     // Destination port number (16 bits)
-    tcphdr.th_dport = htons (json_object_get_int(Destination_Port_Number_TCP_Head));
+    tcphdr.th_dport = htons (json_object_get_int(destPortNumTCPHead));
 
     // Sequence number (32 bits)
     tcphdr.th_seq = htonl (0);
@@ -483,14 +484,14 @@ int main(int argc, char **argv)
 
     struct udphdr udphdr;
 
-    uint8_t * data = allocate_ustrmem (json_object_get_int(Size_UDP_Payload));
+    uint8_t * data = allocate_ustrmem (json_object_get_int(udppayload));
     
     // UDP data
-    int datalen = json_object_get_int(Size_UDP_Payload);
-    memset (data, 0, json_object_get_int(Size_UDP_Payload));
+    int datalen = json_object_get_int(udppayload);
+    memset (data, 0, json_object_get_int(udppayload));
     // Transport layer protocol (8 bits): 17 for UDP
     iphdr.ip_p = IPPROTO_UDP;
-    iphdr.ip_ttl = json_object_get_int(TTL_UDP_Packets);
+    iphdr.ip_ttl = json_object_get_int(ttlPackets);
 
 
     // IPv4 header checksum (16 bits): set to 0 when calculating checksum
