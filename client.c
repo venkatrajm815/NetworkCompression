@@ -217,10 +217,12 @@ int main(int argc, char * argv[]){
     else{
         printf("Connection to the server is SUCCESSFUL.\n"); 
     }   
-
+    
+    //Gets and prints the server's response: No compression detected or compression detected
     recv(sockfd, &compression, sizeof(compression), 0);
     printf("The servers's response is : %s\n" , compression);
-
+    
+    //Lastly, closes the socket
     close(sockfd); 
     return 0;
 }
