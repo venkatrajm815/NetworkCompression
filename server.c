@@ -84,7 +84,7 @@ int main(int argc, char * argv[]){
     json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
     json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
     json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
-    printf("The Parsing is Successful!\n");
+    printf("The Parsing is SUCCESSFUL.\n");
     
     //This is the Pre-Probing Phase
 
@@ -148,13 +148,12 @@ int main(int argc, char * argv[]){
     addrServer.sin_port = htons(json_object_get_int(destPortNumUDP));
 
     //We begin creating the UDP socket
-    //Print message based on if it was succesful or not 
+    //Print message based on if it was successful or not 
     printf("Creating Socket.\n");
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){ 
         perror("UDP Socket Creation has FAILED\n"); 
         exit(EXIT_FAILURE); 
-    }
-    else{
+    } else{
         printf("UDP Socket Creation is SUCCESSFUL\n");
     }
 
@@ -168,15 +167,16 @@ int main(int argc, char * argv[]){
         printf("UDP Socket Binding is SUCCESSFUL.\n");
     }
 
-    //Receive low entropy data
+    //This is the receiving of the low entropy data, print message for each data packet
     printf("Receiving Low Entropy Data.\n");
     start = clock();
     for(int i = 0; i < json_object_get_int(udpPackets); i++) {
-        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload) + 2, 0, ( struct sockaddr *) &addrClient, &len); 
+        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload) + 2, 0, (struct sockaddr*) &addrClient, &len); 
         packet_id = (int)(((unsigned)UDPbuffer[1] << 8) | UDPbuffer[0]); 
-        printf("Received Low Entropy Packet Number: %d\n", packet_id);
+        printf("Received Low Entropy Data, Packet Number: %d\n", packet_id);
     }
     end = clock();
+    //This is the calculation of time for the low entropy data to be received
     timeTotal  = (((double)end) - ((double)start)) / ((double)CLOCKS_PER_SEC);
     timeLE = timeTotal * 1000;
     printf("Low Entropy Time: %f\n", timeLE);
@@ -185,25 +185,27 @@ int main(int argc, char * argv[]){
     printf("Sleeping.\n"); 
     sleep(json_object_get_int(measurementTime));
 
-    //Receive high entropy data
+    //This is the receiving of the high entropy data, print message for each data packet
     printf("Receiving High Entropy Data.\n");
     memset(&UDPbuffer, 0, json_object_get_int(udppayload)+2);
     start = clock();
     for(int i = 0; i < json_object_get_int(udpPackets); i++) {
-        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload) + 2, 0, ( struct sockaddr *) &addrClient, &len); 
+        recvfrom(sockfd, UDPbuffer, json_object_get_int(udppayload) + 2, 0, (struct sockaddr*) &addrClient, &len); 
         packet_id = (((unsigned)UDPbuffer[1] << 8) | UDPbuffer[0]);
-        printf("Retrieved High Entropy Packet Number: %d\n", packet_id);
+        printf("Received High Entropy Data, Packet Number: %d\n", packet_id);
     }
     end = clock();
+    //This is the calculation of time for the high entropy data to be received
     timeTotal  = (((double)end) - ((double)start)) / ((double)CLOCKS_PER_SEC);
     timeHE = timeTotal * 1000;
     printf("High Entropy Time: %f\n", timeHE);
 
-    //Calculate the time and then send back the data
+    //Calculate the difference between the high entropy data time and low entropy data time 
+    //and checks if it greater than or less than the threshold time. Then stores the result into message.
     if((timeHE - timeLE) > THRESHOLD) {
-        strcpy(message, "COMPRESSION DETECTED\0");
+        strcpy(message, "COMPRESSION DETECTED.\0");
     } else {
-        strcpy(message, "NO COMPRESSION DETECTED\0");
+        strcpy(message, "NO COMPRESSION DETECTED.\0");
     }
     
      //This is Post-Probing Phase
