@@ -54,7 +54,7 @@ void send_file(int sockfd){
 }
 
 int main(int argc, char * argv[]){
-    int sockfd, DF, i;
+    int sockfd, DF;
     char buffer[BUFFER_SIZE], compression[25];
     FILE *fp;
     struct sockaddr_in server_address, client_address;
@@ -64,7 +64,7 @@ int main(int argc, char * argv[]){
 
     //This checks if there is an error in executing the configuration file 
     if (argv[1] == NULL){
-        printf("There is an error in executing the configuration file!\nThe proper usage is ./'name of executable' 'my_config_file'.json\n");
+        printf("There is an error in executing the configuration file! \n The proper usage would be ./'name of executable' 'my_config_file'.json\n");
         return EXIT_FAILURE;
     }
 
@@ -125,111 +125,95 @@ int main(int argc, char * argv[]){
 
     //This is the Probing Phase
 
-    int datagram[json_object_get_int(Size_UDP_Payload)+2];
-    
-
+    int datagram[json_object_get_int(Size_UDP_Payload) + 2];
+    //This puts a zero for everything in the client address	
     memset(&client_address, 0, sizeof(client_address));
-    client_address.sin_family = AF_INET; // specifies address family with IPv4 Protocol 
-    client_address.sin_addr.s_addr = htonl(INADDR_ANY); //binds to IP Address
+    client_address.sin_family = AF_INET; /
+    client_address.sin_addr.s_addr = htonl(INADDR_ANY);
     client_address.sin_port = htons(json_object_get_int(Source_Port_Number_UDP));
     server_address.sin_port = htons(json_object_get_int(Destination_Port_Number_UDP));
 
-    //Create UDP socket
-    printf("Creating Socket...\n");
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 )
-    { 
-        perror("UDP Socket Creation Failed\n"); 
+    //We begin creating the UDP socket
+    //Print message based on if it was succesful or not	
+    printf("Creating Socket.\n");
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ){ 
+        perror("UDP Socket Creation has FAILED\n"); 
         exit(EXIT_FAILURE); 
     }
-    else
-    {
-        printf("UDP Socket Creation Successful\n");
+    else{
+        printf("UDP Socket Creation is SUCCESSFUL\n");
     }
     
-    //Don't fragment bit
-    DF = IP_PMTUDISC_DO; //make val equal to dont fragment
+    //This is the setting of the DON'T fragment
+    DF = IP_PMTUDISC_DO; 
     printf("Setting DON'T FRAGMENT bit...\n");
-    if(setsockopt(sockfd, IPPROTO_IP, IP_MTU_DISCOVER, &DF, sizeof(DF)) < 0)
-    {
+    if(setsockopt(sockfd, IPPROTO_IP, IP_MTU_DISCOVER, &DF, sizeof(DF)) < 0){
         printf("Unable to set DON'T FRAGMENT bit\n");
     }
-    else
-    {
+    else{
         printf("DON'T FRAGMENT bit set correctly!\n");
     }
-
-    if(bind(sockfd, (struct sockaddr *)&client_address, sizeof(client_address)) < 0)
-    {
+    
+    //A check to see if the socket bind passed, prints error message if failed	
+    if(bind(sockfd, (struct sockaddr *)&client_address, sizeof(client_address)) < 0){
         printf("UDP Socket Bind Failed\n");
         exit(EXIT_FAILURE);
     }
-
-    //Sending data packets
     sleep(5);
 
-    //Low entropy
+    //This is the sending of the LOW entropy data
     read_low_entropy_data(datagram, json_object_get_int(Size_UDP_Payload)+2);
-    printf("Sending Low Entropy Data...\n");
-    for(i = 1; i < json_object_get_int(Number_UDP_Packets)+1; i++)//chagne to payload size
-    {
+    printf("Sending Low Entropy Data.\n");
+    for(int i = 1; i < json_object_get_int(Number_UDP_Packets) + 1; i++){
         set_packet_id(datagram, i);
-        sendto(sockfd, datagram, json_object_get_int(Size_UDP_Payload)+2, MSG_CONFIRM, (const struct sockaddr *) &server_address, sizeof(server_address));
+        sendto(sockfd, datagram, json_object_get_int(Size_UDP_Payload) + 2, MSG_CONFIRM, (const struct sockaddr *) &server_address, sizeof(server_address));
     }
-    printf("Low Entropy Sent!\n");
+    printf("Low Entropy data has been sent.\n");
 
-    //Sleeping inter measurement time
-    printf("Sleeping...\n");
+    //Sleeping using the inter-measurement time from the json object
+    printf("Sleeping.\n");
     sleep(json_object_get_int(Inter_Measurement_Time));
 
-    //High Entropy
+    //This is the sending of the HIGH entropy data
     read_high_entropy_data(datagram, json_object_get_int(Size_UDP_Payload)+2);
-    printf("Sending High Entropy Data...\n");
-    for(i = 1; i < json_object_get_int(Number_UDP_Packets)+1; i++) //change to payload size
-    {
+    printf("Sending High Entropy Data.\n");
+    for(int i = 1; i < json_object_get_int(Number_UDP_Packets) + 1; i++){
         set_packet_id(datagram, i);
         sendto(sockfd, datagram, json_object_get_int(Size_UDP_Payload)+2, MSG_CONFIRM, (const struct sockaddr *) &server_address, sizeof(server_address));
     }
-    printf("High entropy sent!\n");
+    printf("High entropy data has been sent.\n");
+    sleep(5);
 
-
-    //Post Probing//
-    sleep(5);//let the server catch up
-
-
-    //TCP socket
-    printf("Creating Socket...\n");
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    { 
-        printf("Socket Creation Failed.\n"); 
+    //This is Post-Probing Phase
+   	
+    //This is the creating of the TCP socket
+    printf("Socket is being created.\n");
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ 
+        printf("Socket Creation has FAILED.\n"); 
         exit(EXIT_FAILURE); 
     } 
-    else
-    {
-        printf("Socket Successfully Created.\n"); 
+    else{
+        printf("Socket Creation is SUCCESSFUL.\n"); 
     }
-
-    //Fill in IP header
-    memset(&server_address, 0, sizeof(server_address));//zeroes out the server address
-    server_address.sin_family = AF_INET; // specifies address family with IPv4 Protocol 
-    server_address.sin_addr.s_addr = inet_addr(json_object_get_string(Server_IP_Address)); //binds to IP Address
-    server_address.sin_port = htons(json_object_get_int(Port_Number_TCP)); //binds to PORT
+	
+    //Here we fill all the information involving the ip address: involves the binding to the ip address and binding to the port
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET; 
+    server_address.sin_addr.s_addr = inet_addr(json_object_get_string(Server_IP_Address)); 
+    server_address.sin_port = htons(json_object_get_int(Port_Number_TCP));
     
-
-    // This connects the client socket to server socket 
-    printf("Final Connection...\n");
-    if (connect(sockfd, (struct sockaddr *)&server_address, sizeof(server_address)) != 0)
-    { 
-	printf("Failed to connect to server.\n"); 
+    //This is where we connect the client socket to the server socket
+    printf("Connecting client socket to server socket.\n");
+    if (connect(sockfd, (struct sockaddr *)&server_address, sizeof(server_address)) != 0){ 
+	printf("Connection to the server has FAILED.\n"); 
 	exit(EXIT_FAILURE); 
     } 
-    else
-    {
-        printf("Successfully connected to the server.\n"); 
-    }
+    else{
+        printf("Connection to the server is SUCCESSFUL.\n"); 
+    }	
 
-    
     recv(sockfd, &compression, sizeof(compression), 0);
-    printf("Server's Response: %s\n" , compression);
+    printf("The servers's response is : %s\n" , compression);
 
     close(sockfd); 
     return 0;
