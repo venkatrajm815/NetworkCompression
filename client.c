@@ -100,7 +100,7 @@ int main(int argc, char * argv[]){
     json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
     json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
     json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
-    printf("The Parsing is Successful!\n");
+    printf("The Parsing is SUCCESSFUL.");
     
     //This is the Pre-Probing Phase
     
