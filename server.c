@@ -172,8 +172,8 @@ int main(int argc, char * argv[]){
     }
     end = clock();
     timeTotal  = (((double)end) - ((double)start)) / ((double)CLOCKS_PER_SEC);
-    low_entropy_time = timeTotal * 1000;
-    printf("Low Entropy Time: %f\n", low_entropy_time);
+    timeLE = timeTotal * 1000;
+    printf("Low Entropy Time: %f\n", timeLE);
 
     //Sleeping inter measurement time
     printf("Sleeping...\n"); 
@@ -194,7 +194,7 @@ int main(int argc, char * argv[]){
     printf("High Entropy Time: %f\n", timeHE);
 
     //Calculate the time and then send back the data
-    if((timeHE - low_entropy_time) > THRESHOLD) {
+    if((timeHE - timeLE) > THRESHOLD) {
         strcpy(message, "COMPRESSION DETECTED\0");
     } else {
         strcpy(message, "NO COMPRESSION DETECTED\0");
