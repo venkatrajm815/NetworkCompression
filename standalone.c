@@ -18,8 +18,6 @@
 #include <netinet/ip.h>
 #include <net/if.h>
 #include "util.h"
-#define BUFFER_SIZE 2000
-
 
 int main(int argc, char **argv) {
     FILE * fp;
