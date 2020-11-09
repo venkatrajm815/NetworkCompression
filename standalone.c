@@ -17,7 +17,6 @@
 #include <sys/ioctl.h> 
 #include <netinet/ip.h>
 #include <net/if.h>
-#include "util.h"
 #define BUFFER_SIZE 2000
 
 //Creating number for IP header
