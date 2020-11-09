@@ -11,8 +11,48 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <json-c/json.h>
-#include "util.h"
 #define BUFFER_SIZE 2000
+
+//This method is responsible for the filling with the high entropy data
+void highEntropy(int *data, int length){
+    FILE *f = fopen("/dev/urandom", "r");
+    int temp;
+    if(f == NULL){
+        return;
+    }
+    for(int i = 2; i < length; i++){
+        temp = (int) getc(f);
+        data[i] = temp;
+    }
+}
+
+//This method is responsible for the filling with the low entropy data
+void lowentropy(int *data, int length){
+    for(int i = 2; i < length; i++) {
+        data[i] = 0;
+    }
+}
+
+//This method is responsible for setting the id for the packets
+void setpacketid(int *data, int index){
+    unsigned int temp = index;
+    unsigned char lower = (unsigned)temp & 0xff;
+    unsigned char upper = (unsigned)temp >> 8; 
+    data[0] = lower; //this is to set the first index to 'lower bit'
+    data[1] = upper; //this is to set the first index to 'upper bit'
+}
+
+//This method sends the file using sockets
+void sendfile(int sockfd){ 
+    char buffer[BUFFER_SIZE];
+    FILE *fp = fopen("myconfig.json","r");
+    while (fgets(buffer, BUFFER_SIZE, fp) != NULL){
+        write(sockfd,buffer,strlen(buffer));
+    }   
+    fclose(fp);
+    printf("File sent.\n");
+}
+
 
 int main(int argc, char * argv[]){
     int sockfd, DF;
