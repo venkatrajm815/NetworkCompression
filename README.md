@@ -26,7 +26,7 @@ To run the applications, use the following commands:
 
 in the host vm, and
 
-*./client myconfig.json 
+* ./client myconfig.json 
 
 on the client VM immediatly after one another.
 
