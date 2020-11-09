@@ -47,8 +47,6 @@ uint16_t sumUDP(struct ip ip, struct udphdr udphdr, uint8_t *payload, int payloa
     char BUFFER[IP_MAXPACKET];
     char *ptr;
     int len = 0;
-    int i;
-
     ptr = &BUFFER[0]; 
 
     // Copy source IP address into BUFFER (32 bits)
@@ -214,8 +212,6 @@ int * allocateMemInt(int length) {
 int main(int argc, char **argv) {
     FILE * fp;
     char BUFFER[BUFFER_SIZE];
-    struct sockaddr_in addrServer;
-    struct sockaddr_in addClient;
     struct json_object *jsonParsed;
     struct json_object *serverIPAddr;
     struct json_object *srcPortNumUDP;
@@ -265,7 +261,7 @@ int main(int argc, char **argv) {
     struct addrinfo hints, *res;
     struct sockaddr_in *ipv4, sin;
     struct ifreq ifr;
-    uint8_t *tcpPacketHead, *udpPacket, *tcpPaketTail, *udpPacket2;
+    uint8_t *tcpPacketHead, *udpPacket, *tcpPaketTail;
     int status, sd, *ip_flags, *tcp_flags;
     char *interface, *target, *src_ip, *dst_ip;
     void *tmp;
@@ -418,10 +414,8 @@ int main(int argc, char **argv) {
     udp.dest = htons (9999);
     udp.len = htons (UDP_HDRLEN + datalen);
     udp.check = sumUDP (ip, udp, data, datalen);
-    int frame_length = IP4_HDRLEN + UDP_HDRLEN + datalen;
     udpPacket = allocateMemUnsChar (IP_MAXPACKET);
-    udpPacket2 = allocateMemUnsChar (IP_MAXPACKET);
-
+  
     // IPv4 header
     memcpy (udpPacket, &ip, IP4_HDRLEN * sizeof (uint8_t));
 
@@ -434,7 +428,7 @@ int main(int argc, char **argv) {
         exit (EXIT_FAILURE);
     }
 
-    printf("(Testing) Success: All required packets have been sent!\n");
+    printf("All the packets have been sent SUCCESSFULLY.\n");
     close (sd);
     return (EXIT_SUCCESS);
 }
