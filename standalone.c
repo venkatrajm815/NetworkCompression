@@ -14,8 +14,6 @@
 #include <fcntl.h>
 #include <time.h>
 
-#define BUFFER_SIZE 2000
-
 
 struct ipheader {
 
@@ -111,60 +109,58 @@ int main(int argc, char **argv)
 { 
     /* JSON PARSING */
 
-    FILE *fp;
-    char BUFFER[BUFFER_SIZE];
-    struct json_object *jsonParsed;
-    struct json_object *serverIPAddr;
-    struct json_object *srcPortNumUDP;
-    struct json_object *destPortNumUDP;
-    struct json_object *destPortNumTCPHead;
-    struct json_object *destPortNumTCPTail; 
-    struct json_object *portNumTCP;
-    struct json_object *udppayload;
-    struct json_object *measurementTime;
-    struct json_object *udpPackets;
-    struct json_object *ttlPackets;
-    enum{UDP_HDRLEN=8, ICMP_HDRLEN=8, TCP_HDRLEN=20, IP4_HDRLEN=20};
+    char buffer1[1024];
+    struct json_object *parsed_json;
+    struct json_object *serverip;
+    struct json_object *srcportudp;
+    struct json_object *destportudp;
+    struct json_object *destporttcphead;
+    struct json_object *destporttcptail;
+    struct json_object *portnumtcp;
+    struct json_object *payload;
+    struct json_object *intermtime;
+    struct json_object *numudppackets;
+    struct json_object *ttl;
 
-   //This checks if there is an error in executing the configuration file 
-    if (argv[1] == NULL){
-        printf("ERROR!\nnEnter ./'application name' myconfig.json\n");
-        return EXIT_FAILURE;
+    char *filename;
+    FILE *fp;
+
+    // getting file from command-line argument
+    if (argc >= 2){
+        filename = argv[1];
+        printf("File name: %s\n", filename);
+        fp = fopen(argv[1], "r");
+        fread(buffer1, 1024, 1, fp);
+        fclose(fp);
+    }
+    else {
+        perror("fopen");
     }
     
-     //Opening of the JSON file
-    fp = fopen(argv[1], "r"); 
-    if(fp == NULL) {
-        printf("There is an error opening the file!\n"); 
-        return EXIT_FAILURE;
-    }
-    printf("Parsing through file.\n");
-    fread(BUFFER, BUFFER_SIZE, 1, fp); 
-    jsonParsed = json_tokener_parse(BUFFER);
+    parsed_json = json_tokener_parse(buffer1);
 
-    json_object_object_get_ex(jsonParsed, "serverIPAddr", &serverIPAddr);
-    json_object_object_get_ex(jsonParsed, "srcPortNumUDP", &srcPortNumUDP);
-    json_object_object_get_ex(jsonParsed, "destPortNumUDP", &destPortNumUDP);
-    json_object_object_get_ex(jsonParsed, "destPortNumTCPHead", &destPortNumTCPHead);
-    json_object_object_get_ex(jsonParsed, "destPortNumTCPTail", &destPortNumTCPTail);
-    json_object_object_get_ex(jsonParsed, "portNumTCP", &portNumTCP);
-    json_object_object_get_ex(jsonParsed, "udppayload", &udppayload);
-    json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
-    json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
-    json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
-    printf("The Parsing is SUCCESSFUL.");
+    json_object_object_get_ex(parsed_json, "serverip", &serverip);
+    json_object_object_get_ex(parsed_json, "srcportudp", &srcportudp);
+    json_object_object_get_ex(parsed_json, "destportudp", &destportudp);
+    json_object_object_get_ex(parsed_json, "destporttcphead", &destporttcphead);
+    json_object_object_get_ex(parsed_json, "destporttcptail", &destporttcptail);
+    json_object_object_get_ex(parsed_json, "portnumtcp", &portnumtcp);
+    json_object_object_get_ex(parsed_json, "payload", &payload);
+    json_object_object_get_ex(parsed_json, "intermtime", &intermtime);
+    json_object_object_get_ex(parsed_json, "numudppackets", &numudppackets);
+    json_object_object_get_ex(parsed_json, "ttl", &ttl);
 
     //saving json objects
-    char *serverip2 = json_object_get_string(serverIPAddr);
-    int srcportudp2 = json_object_get_int(srcPortNumUDP);
-    int destportudp2 = json_object_get_int(destPortNumUDP);
-    char *destporttcphead2 = json_object_get_string(destPortNumTCPHead);
-    char *destporttcptail2 = json_object_get_string(destPortNumTCPTail);
-    char *portnumtcp2 = json_object_get_string(portNumTCP);
-    int payload2 = json_object_get_int(udppayload);
-    int intermtime2 = json_object_get_int(measurementTime);
-    int numudppackets2 = json_object_get_int(udpPackets);
-    int ttl2 = json_object_get_int(ttlPackets);
+    char *serverip2 = json_object_get_string(serverip);
+    int srcportudp2 = json_object_get_int(srcportudp);
+    int destportudp2 = json_object_get_int(destportudp);
+    char *destporttcphead2 = json_object_get_string(destporttcphead);
+    char *destporttcptail2 = json_object_get_string(destporttcptail);
+    char *portnumtcp2 = json_object_get_string(portnumtcp);
+    int payload2 = json_object_get_int(payload);
+    int intermtime2 = json_object_get_int(intermtime);
+    int numudppackets2 = json_object_get_int(numudppackets);
+    int ttl2 = json_object_get_int(ttl);
 
     /* JSON PARSING ENDS */
 
@@ -229,9 +225,9 @@ int main(int argc, char **argv)
 
     // Port numbers
 
-    sin.sin_port = htons(destPortNumTCPHead);
+    sin.sin_port = htons(destporttcphead);
 
-    din.sin_port = htons(destPortNumTCPTail);
+    din.sin_port = htons(destporttcptail);
 
     // IP addresses
 
@@ -240,7 +236,7 @@ int main(int argc, char **argv)
     din.sin_addr.s_addr = inet_addr("192.168.1.16");
 
 
-    memset(&servaddr, 0, sizeof(serverIPAddr));
+    memset(&servaddr, 0, sizeof(servaddr));
     
     // Filling server information
     servaddr.sin_family = AF_INET;
