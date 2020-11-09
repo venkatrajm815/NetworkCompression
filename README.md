@@ -8,7 +8,7 @@ This requires a Linux VM, as well as libjson and pcap. You may obtain libjson an
 
 ## How to Run 
 
-First, the JSON files must be properly edited. The JSON file contains configuration information for the network. Most specifically, the IP address must be set to the ip of the host vm. There are also two places in the code where the IP address is hardcoded in.
+First, the JSON files must be properly edited. The JSON file contains configuration information for the network. Most specifically, the IP address must be set to the ip of the host vm. 
 
 Then, compile using the following commnds: 
 
