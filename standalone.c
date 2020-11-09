@@ -227,9 +227,9 @@ int main(int argc, char **argv)
 
     // Port numbers
 
-    sin.sin_port = htons(destporttcphead);
+    sin.sin_port = htons(destPortNumTCPHead);
 
-    din.sin_port = htons(destporttcptail);
+    din.sin_port = htons(destPortNumTCPTail);
 
     // IP addresses
 
@@ -238,7 +238,7 @@ int main(int argc, char **argv)
     din.sin_addr.s_addr = inet_addr("192.168.1.16");
 
 
-    memset(&servaddr, 0, sizeof(servaddr));
+    memset(&servaddr, 0, sizeof(serverIPAddr));
     
     // Filling server information
     servaddr.sin_family = AF_INET;
