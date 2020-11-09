@@ -1,27 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h> 
+#include <netinet/udp.h>
 #include <errno.h>
+#include <unistd.h>
+#include <string.h>
+#include <netdb.h>
 #include <time.h> 
 #include <ctype.h>
 #include <json-c/json.h>
 #include <pcap.h>
-#include <netinet/tcp.h> 
-#include <netinet/udp.h>
 #include <sys/ioctl.h> 
 #include <netinet/ip.h>
 #include <net/if.h>
 
 #define BUFFER_SIZE 2000
 
-//this function creates unique checksum for the IP headers
-uint16_t checksum(uint16_t *address, int length) {
+//This function takes care of creating an unique sum for the IP headers
+uint16_t sumIP(uint16_t *address, int length) {
     int count = length;
     register uint32_t total = 0;
     uint16_t toreturn = 0;
@@ -42,21 +42,21 @@ uint16_t checksum(uint16_t *address, int length) {
     return (toreturn);
 }
 
-//this function creates unique checksum for the UDP headers
-uint16_t udp4_checksum(struct ip ip, struct udphdr udphdr, uint8_t *payload, int payloadlen) {
-    char buf[IP_MAXPACKET];
+//this function creates unique sum for the UDP headers
+uint16_t sumUDP(struct ip ip, struct udphdr udphdr, uint8_t *payload, int payloadlen) {
+    char BUFFER[IP_MAXPACKET];
     char *ptr;
     int len = 0;
     int i;
 
-    ptr = &buf[0]; 
+    ptr = &BUFFER[0]; 
 
-    // Copy source IP address into buf (32 bits)
+    // Copy source IP address into BUFFER (32 bits)
     memcpy (ptr, &ip.ip_src.s_addr, sizeof (ip.ip_src.s_addr));
     ptr += sizeof (ip.ip_src.s_addr);
     len += sizeof (ip.ip_src.s_addr);
 
-    // Copy destination IP address into buf (32 bits)
+    // Copy destination IP address into BUFFER (32 bits)
     memcpy (ptr, &ip.ip_dst.s_addr, sizeof (ip.ip_dst.s_addr));
     ptr += sizeof (ip.ip_dst.s_addr);
     len += sizeof (ip.ip_dst.s_addr);
@@ -92,17 +92,17 @@ uint16_t udp4_checksum(struct ip ip, struct udphdr udphdr, uint8_t *payload, int
     ptr += payloadlen;
     len += payloadlen;
 
-    return checksum ((uint16_t *) buf, len);
+    return sumIP ((uint16_t *) BUFFER, len);
 }
 
-//this function creates unique checksum for the TCP headers
-uint16_t tcp4_checksum (struct ip ip, struct tcphdr tcp)
+//this function creates unique sumIP for the TCP headers
+uint16_t sumTCP (struct ip ip, struct tcphdr tcp)
 {
-    uint16_t svalue;
-    char buf[IP_MAXPACKET], cvalue;
     char *ptr;
+    uint16_t svalue;
+    char BUFFER[IP_MAXPACKET], cvalue;
+     ptr = &BUFFER[0];
     int len = 0;
-    ptr = &buf[0];
 
     memcpy (ptr, &ip.ip_src.s_addr, sizeof (ip.ip_src.s_addr));
     ptr += sizeof (ip.ip_src.s_addr);
@@ -112,7 +112,8 @@ uint16_t tcp4_checksum (struct ip ip, struct tcphdr tcp)
     ptr += sizeof (ip.ip_dst.s_addr);
     len += sizeof (ip.ip_dst.s_addr);
 
-    *ptr = 0; ptr++;
+    *ptr = 0; 
+    ptr++;
     len += 1;
 
     memcpy (ptr, &ip.ip_p, sizeof (ip.ip_p));
@@ -152,11 +153,11 @@ uint16_t tcp4_checksum (struct ip ip, struct tcphdr tcp)
     memcpy (ptr, &tcp.th_win, sizeof (tcp.th_win));
     ptr += sizeof (tcp.th_win);
     len += sizeof (tcp.th_win);
-    return checksum((uint16_t *) buf, len);
+    return sumIP((uint16_t *) BUFFER, len);
 }
 
 // Allocate memory for an array of chars
-char * allocate_strmem(int length)
+char * allocateMemChar(int length)
 {
     if (length <= 0) {
         fprintf(stderr, "ERROR: Cannot allocate memory. Length is %i\n", length);
@@ -175,7 +176,7 @@ char * allocate_strmem(int length)
 }
 
 // Allocate memory for an array of unsigned chars.
-uint8_t * allocate_ustrmem(int length){
+uint8_t * allocateMemUnsChar(int length){
     if (length <= 0) {
         fprintf(stderr, "ERROR: Cannot allocate memory. Length is %i\n", length);
         exit(EXIT_FAILURE);
@@ -193,7 +194,7 @@ uint8_t * allocate_ustrmem(int length){
 }
 
 // Allocate memory for an array of ints.
-int * allocate_intmem(int length) {
+int * allocateMemInt(int length) {
     if (length <= 0) {
         fprintf (stderr, "ERROR: Length is %i\n", length);
         exit(EXIT_FAILURE);
@@ -212,7 +213,7 @@ int * allocate_intmem(int length) {
 
 int main(int argc, char **argv) {
     FILE * fp;
-    char buffer[BUFFER_SIZE];
+    char BUFFER[BUFFER_SIZE];
     struct sockaddr_in addrServer;
     struct sockaddr_in addClient;
     struct json_object *jsonParsed;
@@ -241,8 +242,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     printf("Parsing through file.\n");
-    fread(buffer, BUFFER_SIZE, 1, fp); //put contents in buffer, then read it into json
-    jsonParsed = json_tokener_parse(buffer);
+    fread(BUFFER, BUFFER_SIZE, 1, fp); 
+    jsonParsed = json_tokener_parse(BUFFER);
 
     json_object_object_get_ex(jsonParsed, "serverIPAddr", &serverIPAddr);
     json_object_object_get_ex(jsonParsed, "srcPortNumUDP", &srcPortNumUDP);
@@ -265,24 +266,24 @@ int main(int argc, char **argv) {
     struct sockaddr_in *ipv4, sin;
     struct ifreq ifr;
     uint8_t *tcpPacketHead, *udpPacket, *tcpPaketTail, *udpPacket2;
-    int i, status, sd, *ip_flags, *tcp_flags;
+    int status, sd, *ip_flags, *tcp_flags;
     char *interface, *target, *src_ip, *dst_ip;
     void *tmp;
     const int on = 1;
 
 
     // Allocate memory for various arrays.
-    tcpPacketHead = allocate_ustrmem (IP_MAXPACKET);
-    tcpPaketTail = allocate_ustrmem (IP_MAXPACKET);
-    interface = allocate_strmem (40);
-    target = allocate_strmem (40);
-    src_ip = allocate_strmem (INET_ADDRSTRLEN);
-    dst_ip = allocate_strmem (INET_ADDRSTRLEN);
-    ip_flags = allocate_intmem (4);
-    tcp_flags = allocate_intmem (8);
+    tcpPacketHead = allocateMemUnsChar (IP_MAXPACKET);
+    tcpPaketTail = allocateMemUnsChar (IP_MAXPACKET);
+    interface = allocateMemChar (40);
+    target = allocateMemChar (40);
+    src_ip = allocateMemChar (INET_ADDRSTRLEN);
+    dst_ip = allocateMemChar (INET_ADDRSTRLEN);
+    ip_flags = allocateMemInt (4);
+    tcp_flags = allocateMemInt (8);
 
     // Sending Packet Through
-    strcpy (interface, "enp0s3"); //eth0 does not compile
+    strcpy (interface, "enp0s3"); 
     sd = socket (AF_INET, SOCK_RAW, IPPROTO_RAW);
     
     // Uses Socket Descripter to look up Interface
@@ -326,7 +327,7 @@ int main(int argc, char **argv) {
     }
     freeaddrinfo (res);
 
-    // IPv4 header
+    // Setting up information for the IPv4 header
     ip.ip_hl = IP4_HDRLEN / sizeof (uint32_t);
     ip.ip_v = 4;
     ip.ip_tos = 0;
@@ -341,22 +342,22 @@ int main(int argc, char **argv) {
     ip.ip_p = IPPROTO_TCP;
     status = inet_pton (AF_INET, src_ip, &(ip.ip_src));
     
-    // Source IPv4 address 
+    // This is the source IPv4 address which is 32 bits
     if (status != 1) {
         fprintf (stderr, "inet_pton() failed.\nError message: %s", strerror (status));
         exit (EXIT_FAILURE);
     }
 
-    // Destination IPv4 address
+    // This is the destination IPv4 address which is also 32 bits
     status = inet_pton (AF_INET, dst_ip, &(ip.ip_dst));
     if (status != 1) {
         fprintf (stderr, "inet_pton() failed.\nError message: %s", strerror (status));
         exit (EXIT_FAILURE);
     }
     ip.ip_sum = 0;
-    ip.ip_sum = checksum((uint16_t *) &ip, IP4_HDRLEN);
+    ip.ip_sum = sumIP((uint16_t *) &ip, IP4_HDRLEN);
 
-
+    //Setting up information for the TCP header
     tcp.th_sport = htons (8080);
     tcp.th_dport = htons (json_object_get_int(destPortNumTCPHead));
     tcp.th_seq = htonl (0);
@@ -367,11 +368,11 @@ int main(int argc, char **argv) {
     tcp_flags[3] = 0;
     tcp_flags[4] = 0;
     tcp.th_flags = 0;
-    for (i=0; i<8; i++) {
+    for (int i = 0; i < 8; i++) {
         tcp.th_flags += (tcp_flags[i] << i);
     }
-    tcp.th_sum = tcp4_checksum (ip, tcp);
-    tcp.th_sum = tcp4_checksum (ip, tcp);
+    tcp.th_sum = sumTCP (ip, tcp);
+    tcp.th_sum = sumTCP (ip, tcp);
     memcpy (tcpPaketTail, &ip, IP4_HDRLEN * sizeof (uint8_t));
     memcpy ((tcpPaketTail + IP4_HDRLEN), &tcp, TCP_HDRLEN * sizeof (uint8_t));
     
@@ -379,7 +380,7 @@ int main(int argc, char **argv) {
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = ip.ip_dst.s_addr;
     sd = socket (AF_INET, SOCK_RAW, IPPROTO_RAW);
-    // Submit request for a raw socket descriptor.
+    // Check to see if socket failed
     if (sd < 0) {
         perror ("socket() failed ");
         exit (EXIT_FAILURE);
@@ -399,7 +400,7 @@ int main(int argc, char **argv) {
 
     struct udphdr udp;
 
-    uint8_t * data = allocate_ustrmem (json_object_get_int(udppayload));
+    uint8_t * data = allocateMemUnsChar (json_object_get_int(udppayload));
     
     // UDP data
     int datalen = json_object_get_int(udppayload);
@@ -408,18 +409,18 @@ int main(int argc, char **argv) {
     ip.ip_ttl = json_object_get_int(ttlPackets);
 
 
-    // IPv4 header checksum (16 bits): set to 0 when calculating checksum
+    // IPv4 header sumIP (16 bits): set to 0 when calculating sumIP
     ip.ip_sum = 0;
-    ip.ip_sum = checksum((uint16_t *) &ip, IP4_HDRLEN);
+    ip.ip_sum = sumIP((uint16_t *) &ip, IP4_HDRLEN);
 
     // UDP header
     udp.source = htons (4950);
     udp.dest = htons (9999);
     udp.len = htons (UDP_HDRLEN + datalen);
-    udp.check = udp4_checksum (ip, udp, data, datalen);
+    udp.check = sumUDP (ip, udp, data, datalen);
     int frame_length = IP4_HDRLEN + UDP_HDRLEN + datalen;
-    udpPacket = allocate_ustrmem (IP_MAXPACKET);
-    udpPacket2 = allocate_ustrmem (IP_MAXPACKET);
+    udpPacket = allocateMemUnsChar (IP_MAXPACKET);
+    udpPacket2 = allocateMemUnsChar (IP_MAXPACKET);
 
     // IPv4 header
     memcpy (udpPacket, &ip, IP4_HDRLEN * sizeof (uint8_t));
