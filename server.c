@@ -11,7 +11,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <json-c/json.h>
-#include "util.h"
+
+#define BUFFER_SIZE 2000
+#define THRESHOLD 100
 
 void receiveFile(int sockfd){
     char buffer[BUFFER_SIZE];
@@ -27,7 +29,6 @@ void receiveFile(int sockfd){
     printf("Config File received!\n");
     fclose(fp);
 } 
-
 
 int main(int argc, char * argv[]){
     FILE * fp;
