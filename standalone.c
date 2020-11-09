@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <time.h>
 
+#define BUFFER_SIZE 2000
+
 
 struct ipheader {
 
