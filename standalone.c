@@ -235,22 +235,6 @@ int * allocate_intmem(int len) {
     }
 }
 
-//server util funcs
-void receiveFile(int sockfd){
-    char buffer[BUFFER_SIZE];
-    FILE *fp = fopen("myconfig.json","w");
-    if(fp == NULL){
-        printf("There is an error in opening the file.");
-        return exit(EXIT_FAILURE);
-    }
-
-    while(read(sockfd, buffer, BUFFER_SIZE) > 0) {
-        fprintf(fp,"%s", buffer);
-    }
-    printf("Config File received!\n");
-    fclose(fp);
-} 
-
 
 int main(int argc, char **argv) {
     FILE * fp;
