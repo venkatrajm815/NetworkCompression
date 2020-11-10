@@ -261,12 +261,9 @@ int main(int argc, char **argv) {
     struct ip ip;
     struct tcphdr tcp;
     struct addrinfo hints, *res;
-    struct sockaddr_in *ipv4, sin;
-    struct ifreq ifr;
-    uint8_t *tcpPacketHead, *udpPacket, *tcpPaketTail;
-    int status, sd, *ip_flags, *tcp_flags;
-    char *interface, *target, *src_ip, *dst_ip;
-    void *tmp;
+    int sd, *tcp_flags;
+    char *interface, *target;
+    
    
     //Memory is getting allocated for struct and variables
     tcpPacketHead = allocateMemUnsChar (IP_MAXPACKET);
