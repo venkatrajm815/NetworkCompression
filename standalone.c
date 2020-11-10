@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
     struct addrinfo hints, *res;
     int sd;
     int *udp_flags, *tcp_flags, *ip_flags;
-     uint8_t *tcpPacketHead, *tcpPacketTail;
+     uint8_t *tcpPacketHead;
     char *interface, *target, *tcpPacketTail, *src_ip, *dst_ip;
     
    
@@ -328,7 +328,7 @@ int main(int argc, char **argv) {
     udp.dest = htons(9999);
     udp.len = htons (UDP_HDRLEN + datalen);
     udp.check = sumUDP (ip, udp, data, datalen);
-    udpPacket = allocateMemUnsChar (IP_MAXPACKET);
+    udpPackets = allocateMemUnsChar (IP_MAXPACKET);
   
     printf("All the packets have been sent SUCCESSFULLY.\n");
     close(sd);
