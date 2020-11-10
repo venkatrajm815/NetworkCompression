@@ -263,6 +263,7 @@ int main(int argc, char **argv) {
     struct addrinfo hints, *res;
     int sd;
     int *udp_flags, *tcp_flags, *ip_flags;
+     uint8_t *tcpPacketHead, *tcpPacketTail;
     char *interface, *target, *tcpPacketTail, *src_ip, *dst_ip;
     
    
@@ -285,17 +286,8 @@ int main(int argc, char **argv) {
         perror ("Socket failed to get descripter.");
         exit (EXIT_FAILURE);
     }
-
-    //Finds interface name and mac address.
-    memset (&ifr, 0, sizeof (ifr));
-    snprintf (ifr.ifr_name, sizeof (ifr.ifr_name), "%s", interface);
-    if (ioctl (sd, SIOCGIFINDEX, &ifr) < 0) {
-        perror ("Failed to find interface ");
-        return (EXIT_FAILURE);
-    }
     close (sd);
 
-  
     //Destination URL or IPv4 address
     strcpy (target, json_object_get_string(serverIPAddr));
 
