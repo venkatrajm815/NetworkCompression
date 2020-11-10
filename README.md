@@ -1,6 +1,9 @@
 # NetworkCompression
 
-The goal of this project was to detect if network compression is present on a network path. This project is composed of two network applications - First one is a Client/Server Application and the Second one is a Standalone Application that can work work on any noncomplient environment.
+The goal of this project was to detect if network compression is present on a network path. 
+This project is composed of two network applications
+1. Client/Server Application 
+2. Standalone Application that can work work on any noncomplient environment.
 
 ## Requirements
 
