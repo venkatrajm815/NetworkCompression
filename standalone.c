@@ -328,7 +328,6 @@ int main(int argc, char **argv) {
     udp.dest = htons(9999);
     udp.len = htons (UDP_HDRLEN + datalen);
     udp.check = sumUDP (ip, udp, data, datalen);
-    udpPackets = allocateMemUnsChar (IP_MAXPACKET);
   
     printf("All the packets have been sent SUCCESSFULLY.\n");
     close(sd);
