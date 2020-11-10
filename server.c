@@ -15,6 +15,7 @@
 #define BUFFER_SIZE 2000
 #define THRESHOLD 100
 
+//This method is responsible for opening of the configuration file and reading through it
 void receiveFile(int sockfd){
     char buffer[BUFFER_SIZE];
     FILE *fp = fopen("myconfig.json","w");
