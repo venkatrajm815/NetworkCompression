@@ -261,13 +261,14 @@ int main(int argc, char **argv) {
     struct ip ip;
     struct tcphdr tcp;
     struct addrinfo hints, *res;
-    int sd, *tcp_flags;
-    char *interface, *target;
+    int sd;
+    int *udp_flags, *tcp_flags, *ip_flags;
+    char *interface, *target, *tcpPacketTail, *src_ip, *dst_ip;
     
    
     //Memory is getting allocated for struct and variables
     tcpPacketHead = allocateMemUnsChar (IP_MAXPACKET);
-    tcpPaketTail = allocateMemUnsChar (IP_MAXPACKET);
+    tcpPacketTail = allocateMemUnsChar (IP_MAXPACKET);
     interface = allocateMemChar (40);
     target = allocateMemChar (40);
     src_ip = allocateMemChar (INET_ADDRSTRLEN);
@@ -299,13 +300,7 @@ int main(int argc, char **argv) {
     strcpy (target, json_object_get_string(serverIPAddr));
 
     memset (&hints, 0, sizeof (struct addrinfo));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = hints.ai_flags | AI_CANONNAME;
-    status = getaddrinfo (target, NULL, &hints, &res);
-    
-   
-
+ 
     //Setting up information for the TCP header and assigning values for the packets
     tcp.th_sport = htons(8080); 
     tcp.th_dport = htons(json_object_get_int(destPortNumTCPHead)); 
