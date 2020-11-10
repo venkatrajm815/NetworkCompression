@@ -1,8 +1,8 @@
 # NetworkCompression
 
-The goal of this project was to detect if network compression is present on a network path. 
+The goal of this project was to detect if network compression is present on a network path, and if found, to locate the compression link. We utilize virtual machines to observe the compression of networks and see if there is difference in time of the packets being sent. If difference is greater than the threshold, then a compression is detected. The configuration JSON file is used to set customized details such IP addresss, port numbers, and number of packets.
 This project is composed of two network applications
-1. Client/Server Application 
+1. Client/Server Application that works in a cooperative environment
 2. Standalone Application that can work work on any noncomplient environment.
 
 ## Requirements
@@ -51,9 +51,7 @@ To run:
 
 ## Issues
 
-Firstly, standalone is not finished. The code does not capture socket information properly, but sends packets correctly. 
-
-Secondly, there are occasions when the code compiles, but doesn't work as intended when on different VMs. We are not sure what the problem with it is, but it might come from the fact that the IP addresses are sent improperly, or from the junk data in the JSON files after it compiles.
+The only issue is that the Standalone Application is not finished. Currently, it has memory being allocated and the setting up of headers for TCP, UDP, and IP. There is pcap file for the standalone as we were not able to complete the part where we send packets.
 
 ## Authors
 Briant Shen
