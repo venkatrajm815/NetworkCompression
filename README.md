@@ -19,9 +19,9 @@ Here are some commands you can use:
 
 Before running the applications either on the client side or server side, you must change the myconfig.json to suit your network details. For example, the IP address must be set to the IPv4 address of the server. 
 
-After completing that step, you will have clone the project repository into both of your virtual machines using the command below:
+After completing that step, you will have to clone the project repository into both of your virtual machines using the command below:
 
-* git clone "repo_name"
+* git clone "http_to_repo_name"
 
 Then, to compile on the server and client VMs use the following commands, respectively: 
 
