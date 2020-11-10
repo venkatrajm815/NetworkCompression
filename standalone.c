@@ -19,7 +19,7 @@
 #include <net/if.h>
 #define BUFFER_SIZE 2000
 
-//Creating number for IP header
+//This creates a number for the IP header
 uint16_t sumIP(uint16_t *address, int length) {
     int count = length;
     register uint32_t total = 0;
@@ -41,24 +41,24 @@ uint16_t sumIP(uint16_t *address, int length) {
     return (toreturn);
 }
 
-//Creating number for udp header
+//This creates a number for the UDP header
 uint16_t sumUDP(struct ip ip, struct udphdr udphdr, uint8_t *payload, int payloadlen) {
     char BUFFER[IP_MAXPACKET];
     char *ptr;
     int len = 0;
     ptr = &BUFFER[0]; 
-
-    //Enter 32 bit src IP addr into buffer
+    
+    //Writing of addresses into buffer and incrementing of length
     memcpy (ptr, &ip.ip_src.s_addr, sizeof (ip.ip_src.s_addr));
     ptr += sizeof (ip.ip_src.s_addr);
     len += sizeof (ip.ip_src.s_addr);
 
-    //Enter 32 bit dest IP addr into buffer
     memcpy (ptr, &ip.ip_dst.s_addr, sizeof (ip.ip_dst.s_addr));
     ptr += sizeof (ip.ip_dst.s_addr);
     len += sizeof (ip.ip_dst.s_addr);
 
-    *ptr = 0; ptr++;
+    *ptr = 0; 
+    ptr++;
     len += 1;
 
     memcpy (ptr, &ip.ip_p, sizeof (ip.ip_p));
@@ -81,8 +81,10 @@ uint16_t sumUDP(struct ip ip, struct udphdr udphdr, uint8_t *payload, int payloa
     ptr += sizeof (udphdr.len);
     len += sizeof (udphdr.len);
 
-    *ptr = 0; ptr++;
-    *ptr = 0; ptr++;
+    *ptr = 0; 
+    ptr++;
+    *ptr = 0; 
+    ptr++;
     len += 2;
 
     memcpy (ptr, payload, payloadlen);
@@ -92,7 +94,7 @@ uint16_t sumUDP(struct ip ip, struct udphdr udphdr, uint8_t *payload, int payloa
     return sumIP ((uint16_t *) BUFFER, len);
 }
 
-//Creating unique IP for tcp header
+//This creates a number for the TCP header
 uint16_t sumTCP(struct ip ip, struct tcphdr tcp)
 {
     char *ptr;
@@ -100,7 +102,8 @@ uint16_t sumTCP(struct ip ip, struct tcphdr tcp)
     char BUFFER[IP_MAXPACKET], cvalue;
      ptr = &BUFFER[0];
     int len = 0;
-
+    
+    //Writing of addresses into buffer and incrementing of length
     memcpy (ptr, &ip.ip_src.s_addr, sizeof (ip.ip_src.s_addr));
     ptr += sizeof (ip.ip_src.s_addr);
     len += sizeof (ip.ip_src.s_addr);
@@ -150,10 +153,11 @@ uint16_t sumTCP(struct ip ip, struct tcphdr tcp)
     memcpy (ptr, &tcp.th_win, sizeof (tcp.th_win));
     ptr += sizeof (tcp.th_win);
     len += sizeof (tcp.th_win);
+    
     return sumIP((uint16_t *) BUFFER, len);
 }
 
-//Create an array of unsigned char
+//This creates an array of characters
 char * allocateMemChar(int length)
 {
     if (length <= 0) {
@@ -172,7 +176,7 @@ char * allocateMemChar(int length)
     }
 }
 
-//Create an array of unsigned char
+//This creates an array of unsigned characters
 uint8_t * allocateMemUnsChar(int length){
     if (length <= 0) {
         fprintf(stderr, "ERROR: Cannot allocate memory. Length is %i\n", length);
@@ -190,7 +194,7 @@ uint8_t * allocateMemUnsChar(int length){
     }
 }
 
-//Create an array of ints
+//This creates an array of integers
 int * allocateMemInt(int length) {
     if (length <= 0) {
         fprintf (stderr, "ERROR: Length is %i\n", length);
@@ -224,19 +228,20 @@ int main(int argc, char **argv) {
     struct json_object *ttlPackets;
     enum{UDP_HDRLEN=8, ICMP_HDRLEN=8, TCP_HDRLEN=20, IP4_HDRLEN=20};
 
-   //This checks if there is an error in executing the configuration file 
+    //This checks if there is an error in executing the configuration file 
     if (argv[1] == NULL){
         printf("ERROR!\nnEnter ./'application name' myconfig.json\n");
         return EXIT_FAILURE;
     }
     
-     //Opening of the JSON file
+    //Opening of the JSON file
     fp = fopen(argv[1], "r"); 
     if(fp == NULL) {
         printf("There is an error opening the file!\n"); 
         return EXIT_FAILURE;
     }
     printf("Parsing through file.\n");
+    //Here we go through the file and put the contents into buffer, then we parse through the myconfig.json and convert it into a JSON object
     fread(BUFFER, BUFFER_SIZE, 1, fp); 
     jsonParsed = json_tokener_parse(BUFFER);
 
@@ -250,10 +255,8 @@ int main(int argc, char **argv) {
     json_object_object_get_ex(jsonParsed, "measurementTime", &measurementTime);
     json_object_object_get_ex(jsonParsed, "udpPackets", &udpPackets);
     json_object_object_get_ex(jsonParsed, "ttlPackets", &ttlPackets);
-    printf("The Parsing is SUCCESSFUL.");
-
-    printf("(Testing) Preparing to send packets!\n");
-    printf("Sending.\n");
+    printf("The Parsing is SUCCESSFUL.\n");
+    printf("Sending Packets.\n");
     
     struct ip ip;
     struct tcphdr tcp;
@@ -264,10 +267,8 @@ int main(int argc, char **argv) {
     int status, sd, *ip_flags, *tcp_flags;
     char *interface, *target, *src_ip, *dst_ip;
     void *tmp;
-    const int on = 1;
-
-
-    //Initialize prior struct and variables
+   
+    //Memory is getting allocated for struct and variables
     tcpPacketHead = allocateMemUnsChar (IP_MAXPACKET);
     tcpPaketTail = allocateMemUnsChar (IP_MAXPACKET);
     interface = allocateMemChar (40);
@@ -281,13 +282,13 @@ int main(int argc, char **argv) {
     strcpy (interface, "enp0s3"); 
     sd = socket (AF_INET, SOCK_RAW, IPPROTO_RAW);
     
-    // Uses Socket Descripter to look up Interface
+    //Uses Socket Descripter to look up Interface
     if (sd < 0) {
         perror ("Socket failed to get descripter.");
         exit (EXIT_FAILURE);
     }
 
-    // Finds interface name and mac address.
+    //Finds interface name and mac address.
     memset (&ifr, 0, sizeof (ifr));
     snprintf (ifr.ifr_name, sizeof (ifr.ifr_name), "%s", interface);
     if (ioctl (sd, SIOCGIFINDEX, &ifr) < 0) {
@@ -296,10 +297,8 @@ int main(int argc, char **argv) {
     }
     close (sd);
 
-    // Source IPv4 address
-    strcpy (src_ip, "10.0.0.249");
-
-    // Destination URL or IPv4 address
+  
+    //Destination URL or IPv4 address
     strcpy (target, json_object_get_string(serverIPAddr));
 
     memset (&hints, 0, sizeof (struct addrinfo));
@@ -308,89 +307,21 @@ int main(int argc, char **argv) {
     hints.ai_flags = hints.ai_flags | AI_CANONNAME;
     status = getaddrinfo (target, NULL, &hints, &res);
     
-    // Resolving final target
-    if (status != 0) {
-        fprintf (stderr, "getaddrinfo failed!: %s\n", gai_strerror (status));
-        exit (EXIT_FAILURE);
-    }
-    ipv4 = (struct sockaddr_in *) res->ai_addr;
-    tmp = &(ipv4->sin_addr);
-    if (inet_ntop (AF_INET, tmp, dst_ip, INET_ADDRSTRLEN) == NULL) {
-        status = errno;
-        fprintf (stderr, "inet_ntop() failed.\n%s", strerror (status));
-        exit (EXIT_FAILURE);
-    }
-    freeaddrinfo(res);
+   
 
-    // Setting up information for the IPv4 header
-    ip.ip_hl = IP4_HDRLEN / sizeof (uint32_t);
-    ip.ip_v = 4; //protocol ver
-    ip.ip_tos = 0; //service type
-    ip.ip_len = htons(IP4_HDRLEN + TCP_HDRLEN); //datagram total length
-    ip.ip_id = htons(0); //irrelevant, since we have a single datagram
-    ip_flags[0] = 0;
-    ip_flags[1] = 0;
-    ip_flags[2] = 0;
-    ip_flags[3] = 0;
-    ip.ip_off = htons ((ip_flags[0] << 15) + (ip_flags[1] << 14) + (ip_flags[2] << 13) + ip_flags[3]);
-    ip.ip_ttl = 255; //default max time
-    ip.ip_p = IPPROTO_TCP; //transport layer protocol
-    status = inet_pton(AF_INET, src_ip, &(ip.ip_src));
-    
-    // This is the source IPv4 address which is 32 bits
-    if (status != 1) {
-        fprintf (stderr, "inet_pton() failed.\nError message: %s", strerror (status));
-        exit (EXIT_FAILURE);
-    }
-
-    // This is the destination IPv4 address which is also 32 bits
-    status = inet_pton(AF_INET, dst_ip, &(ip.ip_dst));
-    if (status != 1) {
-        fprintf(stderr, "inet_pton() failed.\nError message: %s", strerror (status));
-        exit (EXIT_FAILURE);
-    }
-    ip.ip_sum = 0;
-    ip.ip_sum = sumIP((uint16_t *) &ip, IP4_HDRLEN);
-
-    //Setting up information for the TCP header
-    tcp.th_sport = htons(8080); //get source
-    tcp.th_dport = htons(json_object_get_int(destPortNumTCPHead)); //get dest
-    tcp.th_seq = htonl(0); //get sequence
-    tcp.th_ack = htonl(0); //get sequence
-    tcp_flags[0] = 0; //FIN
-    tcp_flags[1] = 1; //SYN
-    tcp_flags[2] = 1; //RST
-    tcp_flags[3] = 0; //PSH
-    tcp_flags[4] = 0; //ACK
+    //Setting up information for the TCP header and assigning values for the packets
+    tcp.th_sport = htons(8080); 
+    tcp.th_dport = htons(json_object_get_int(destPortNumTCPHead)); 
+    tcp.th_seq = htonl(0); 
+    tcp.th_ack = htonl(0); 
+    tcp_flags[0] = 0; 
+    tcp_flags[1] = 1;
+    tcp_flags[2] = 1; 
+    tcp_flags[3] = 0; 
+    tcp_flags[4] = 0;
     tcp.th_flags = 0;
     for (int i = 0; i < 8; i++) {
         tcp.th_flags += (tcp_flags[i] << i);
-    }
-    tcp.th_sum = sumTCP(ip, tcp);
-    tcp.th_sum = sumTCP(ip, tcp);
-    memcpy(tcpPaketTail, &ip, IP4_HDRLEN * sizeof (uint8_t));
-    memcpy((tcpPaketTail + IP4_HDRLEN), &tcp, TCP_HDRLEN * sizeof (uint8_t));
-    
-    memset(&sin, 0, sizeof (struct sockaddr_in));
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = ip.ip_dst.s_addr;
-    sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-    // Check to see if socket failed
-    if (sd < 0) {
-        perror("socket() failed ");
-        exit(EXIT_FAILURE);
-    }
-
-    //Make flag so socket expects at IPv4.
-    if (setsockopt(sd, IPPROTO_IP, IP_HDRINCL, &on, sizeof (on)) < 0) {
-        perror("Failed to set IP_HDRINCL. ");
-        exit(EXIT_FAILURE);
-    }
-
-    // Bind socket to interface index.
-    if (setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof (ifr)) < 0) {
-        perror("Failed interface bind. ");
-        exit(EXIT_FAILURE);
     }
 
     struct udphdr udp;
@@ -404,7 +335,7 @@ int main(int argc, char **argv) {
     ip.ip_ttl = json_object_get_int(ttlPackets);
 
 
-    // IPv4 header sumIP (16 bits): set to 0 when calculating sumIP
+    // Calculating sumIP
     ip.ip_sum = 0;
     ip.ip_sum = sumIP((uint16_t *) &ip, IP4_HDRLEN);
 
@@ -415,18 +346,6 @@ int main(int argc, char **argv) {
     udp.check = sumUDP (ip, udp, data, datalen);
     udpPacket = allocateMemUnsChar (IP_MAXPACKET);
   
-    // IPv4 header
-    memcpy(udpPacket, &ip, IP4_HDRLEN * sizeof (uint8_t));
-
-    // UDP header
-    memcpy(udpPacket + IP4_HDRLEN, &udp, UDP_HDRLEN);
-
-    // Send ethernet frame to socket.
-    if (sendto(sd, tcpPacketHead, IP4_HDRLEN + TCP_HDRLEN, 0, (struct sockaddr *) &sin, sizeof (struct sockaddr)) < 0)  {
-        perror("sendto() failed ");
-        exit(EXIT_FAILURE);
-    }
-
     printf("All the packets have been sent SUCCESSFULLY.\n");
     close(sd);
     return(EXIT_SUCCESS);
