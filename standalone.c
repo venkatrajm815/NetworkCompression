@@ -182,7 +182,6 @@ uint8_t * allocateMemUnsChar(int length){
         fprintf(stderr, "ERROR: Cannot allocate memory. Length is %i\n", length);
         exit(EXIT_FAILURE);
     }
-
     void *temp;
     temp = (uint8_t *) malloc(length*sizeof(uint8_t));
     if(temp == NULL){
@@ -202,9 +201,8 @@ int * allocateMemInt(int length) {
     }
     void *temp;
     temp = (int *) malloc(length*sizeof(int));
-
     if(temp == NULL){
-        fprintf (stderr, "ERROR: Memory failled to allocate.\n");
+        fprintf (stderr, "Error: FAILED to allocate memory\n");
         exit(EXIT_FAILURE);
     } else {
         memset(temp, 0, length * sizeof (char));
@@ -213,7 +211,7 @@ int * allocateMemInt(int length) {
 }
 
 int main(int argc, char **argv) {
-    FILE * fp;
+    FILE *fp;
     char BUFFER[BUFFER_SIZE];
     struct json_object *jsonParsed;
     struct json_object *serverIPAddr;
@@ -258,6 +256,7 @@ int main(int argc, char **argv) {
     printf("The Parsing is SUCCESSFUL.\n");
     printf("Sending Packets.\n");
     
+    //Structs, variables, ints, characters to be used for sending packets
     struct ip ip;
     struct tcphdr tcp;
     struct addrinfo hints, *res;
@@ -277,18 +276,15 @@ int main(int argc, char **argv) {
     ip_flags = allocateMemInt (4);
     tcp_flags = allocateMemInt (8);
 
-    // Sending Packet Through
     strcpy (interface, "enp0s3"); 
     sd = socket (AF_INET, SOCK_RAW, IPPROTO_RAW);
-    
-    //Uses Socket Descripter to look up Interface
     if (sd < 0) {
         perror ("Socket failed to get descripter.");
         exit (EXIT_FAILURE);
     }
     close (sd);
 
-    //Destination URL or IPv4 address
+    //Copies the server IP address as the target
     strcpy (target, json_object_get_string(serverIPAddr));
 
     memset (&hints, 0, sizeof (struct addrinfo));
@@ -315,13 +311,7 @@ int main(int argc, char **argv) {
     // UDP data
     int datalen = json_object_get_int(udppayload);
     memset(data, 0, json_object_get_int(udppayload));
-    ip.ip_p = IPPROTO_UDP;
     ip.ip_ttl = json_object_get_int(ttlPackets);
-
-
-    // Calculating sumIP
-    ip.ip_sum = 0;
-    ip.ip_sum = sumIP((uint16_t *) &ip, IP4_HDRLEN);
 
     // UDP header
     udp.source = htons(4950);
