@@ -18,19 +18,24 @@
 void highEntropy(int *data, int length){
     FILE *f = fopen("/dev/urandom", "r");
     int temp;
+    int i = 2;
     if(f == NULL){
         return;
     }
-    for(int i = 2; i < length; i++){
-        temp = (int) getc(f);
+    while(i < length){
+        temp = (int)getc(f);
         data[i] = temp;
+        i++;
     }
 }
 
 //This method is responsible for the filling with the low entropy data
 void lowentropy(int *data, int length){
-    for(int i = 2; i < length; i++) {
-        data[i] = 0;
+    int i = 2;
+    while(i < length){
+        temp = (int)getc(f);
+        data[i] = temp;
+        i++;
     }
 }
 
